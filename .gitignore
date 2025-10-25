@@ -1,0 +1,16 @@
+# Dependências
+/backend/node_modules
+/frontend/node_modules
+
+# Segredos e Arquivos de Banco de Dados
+/backend/.env
+/backend/database.sqlite
+
+# Arquivos de Build/Cache
+# Logs do Windows/VS Code
+Thumbs.db
+.DS_Store
+*.log
+
+# Builds do Frontend
+/frontend/build
