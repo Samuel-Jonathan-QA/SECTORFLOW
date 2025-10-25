@@ -24,7 +24,7 @@ O foco principal é a <strong>segurança</strong> e a <strong>separação de res
   <li><strong>Fundação e Segurança:</strong> ✅ Completa</li>
   <li><strong>CRUD Setores:</strong> ⚙️ Pendente</li>
   <li><strong>CRUD Produtos:</strong> ⚙️ Pendente</li>
-</ul
+</ul>
 <hr>
 <h2>⚙️ Tecnologias e Arquitetura</h2>
 
@@ -160,3 +160,4 @@ npm start
 <p align="center">
 <strong>💻 Automação, café e paciência — nessa ordem.</strong>
 </p>
+
