@@ -7,6 +7,7 @@ const userRoutes = require('./routes/users');
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 
+
 // Carrega os modelos para que o sync funcione (MANTIDO)
 require('./models/User'); 
 require('./models/Sector'); 

@@ -1,29 +1,30 @@
+// backend/routes/sectors.js (VERSÃO FINAL E CORRIGIDA)
+
 const express = require('express');
-const Sector = require('../models/Sector');
 const router = express.Router();
 
-// Listar todos os produtos
-router.get('/', async (req, res) => {
-  const sectors = await Sector.findAll();
-  res.json(sectors);
-});
+// Importa o controller de Setores
+const sectorController = require('../controllers/SectorController');
 
-// Cria setor
-router.post('/', async (req, res) => {
-  const sector = await Sector.create(req.body);
-  res.json(sector);
-});
+// 🚨 CORREÇÃO AQUI: Importa o objeto do middleware e desestrutura a função 'protect'
+// renomeando-a para 'authenticateToken'.
+const { protect: authenticateToken } = require('../middleware/auth');
 
-// Deletar setor
-router.delete('/:id', async (req, res) => {
-  try {
-    const deleted = await Sector.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ message: 'Setor não encontrado' });
-    res.json({ message: 'Setor deletado com sucesso' });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao deletar setor', error });
-  }
-});
+// ======================
+// 🚀 Rotas de Setores
+// ======================
 
+// [GET] Listar todos os setores
+router.get('/', authenticateToken, sectorController.getAllSectors);
 
+// [POST] Criar um novo setor
+router.post('/', authenticateToken, sectorController.createSector);
+
+// [PUT] Atualizar um setor existente por ID
+router.put('/:id', authenticateToken, sectorController.updateSector);
+
+// [DELETE] Excluir um setor por ID
+router.delete('/:id', authenticateToken, sectorController.deleteSector);
+
+// Exporta o roteador para ser usado no app principal
 module.exports = router;
