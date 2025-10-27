@@ -1,27 +1,19 @@
-// backend/routes/users.js (DEVE ESTAR ASSIM)
+// backend/routes/users.js (AJUSTADO)
 
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/UserController');
+const UserController = require('../controllers/UserController');
+const protect = require('../middleware/auth'); // Middleware de autenticação
+const checkRole = require('../middleware/permission'); // 🚨 NOVO MIDDLEWARE 🚨
 
-// 🚨 CORREÇÃO ESSENCIAL: Desestrutura a função 'protect' e a renomeia
-const { protect: authenticateToken } = require('../middleware/auth'); 
+// 🚨 Apenas ADMIN pode ver a lista completa de usuários e criar outros usuários 🚨
+router.get('/', protect, checkRole(['ADMIN']), UserController.getAllUsers);
+router.post('/', protect, checkRole(['ADMIN']), UserController.createUser);
 
-// ======================
-// 🚀 Rotas de Usuários
-// ======================
+// Rotas de Edição e Deleção de Usuários 
+router.put('/:id', protect, checkRole(['ADMIN']), UserController.updateUser);
+router.delete('/:id', protect, checkRole(['ADMIN']), UserController.deleteUser);
 
-// 1. [GET] Listar todos os usuários (Linha 15, que estava falhando)
-router.get('/', authenticateToken, userController.getAllUsers);
-
-// 2. [POST] Criar um novo usuário
-router.post('/', authenticateToken, userController.createUser);
-
-// 3. [PUT] Atualizar um usuário por ID
-router.put('/:id', authenticateToken, userController.updateUser);
-
-// 4. [DELETE] Excluir um usuário por ID
-router.delete('/:id', authenticateToken, userController.deleteUser);
 
 
 module.exports = router;

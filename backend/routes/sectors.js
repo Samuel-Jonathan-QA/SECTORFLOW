@@ -1,30 +1,19 @@
-// backend/routes/sectors.js (VERSÃO FINAL E CORRIGIDA)
+// backend/routes/sectors.js (CORRIGIDO)
 
 const express = require('express');
 const router = express.Router();
+const SectorController = require('../controllers/SectorController');
+const protect = require('../middleware/auth');
+const checkRole = require('../middleware/permission');
 
-// Importa o controller de Setores
-const sectorController = require('../controllers/SectorController');
+// 🚨 Apenas ADMIN pode gerenciar setores 🚨
 
-// 🚨 CORREÇÃO AQUI: Importa o objeto do middleware e desestrutura a função 'protect'
-// renomeando-a para 'authenticateToken'.
-const { protect: authenticateToken } = require('../middleware/auth');
+// Lista de Setores (CORRIGIDO para getAllSectors)
+router.get('/', SectorController.getAllSectors); // <-- CORRIGIDO AQUI!
 
-// ======================
-// 🚀 Rotas de Setores
-// ======================
+// Rotas de Criação, Edição e Deleção de Setores
+router.post('/', protect, checkRole(['ADMIN']), SectorController.createSector);
+router.put('/:id', protect, checkRole(['ADMIN']), SectorController.updateSector);
+router.delete('/:id', protect, checkRole(['ADMIN']), SectorController.deleteSector);
 
-// [GET] Listar todos os setores
-router.get('/', authenticateToken, sectorController.getAllSectors);
-
-// [POST] Criar um novo setor
-router.post('/', authenticateToken, sectorController.createSector);
-
-// [PUT] Atualizar um setor existente por ID
-router.put('/:id', authenticateToken, sectorController.updateSector);
-
-// [DELETE] Excluir um setor por ID
-router.delete('/:id', authenticateToken, sectorController.deleteSector);
-
-// Exporta o roteador para ser usado no app principal
 module.exports = router;

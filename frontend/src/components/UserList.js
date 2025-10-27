@@ -1,43 +1,69 @@
-// UserList.jsx
-import { List, ListItem, ListItemText, Typography, Paper, IconButton } from '@mui/material';
+// UserList.jsx (REFATORADO COM EDIÇÃO)
+
+import { List, ListItem, ListItemText, Typography, Paper, IconButton, Box } from '@mui/material'; // Adicionado Box
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit'; // 🚨 NOVO ÍCONE DE EDIÇÃO 🚨
 
-function UserList({ users, onDelete }) {
-  return (
-    <Paper elevation={3} style={{ padding: '20px' }}>
-      {/* Título fixo */}
-      <Typography variant="h6" style={{ marginBottom: '10px' }}>Usuários</Typography>
+// 🚨 Recebe a nova prop 'onEdit' 🚨
+function UserList({ users, onDelete, onEdit }) { 
+    return (
+        <Paper elevation={3} style={{ padding: '10px' }}>
 
-      {/* Lista rolável */}
-      <div style={{ height: '150px', overflowY: 'auto' }}>
-        <List>
-          {users.map(user => (
-            <ListItem
-              key={user.id}
-              secondaryAction={
-                <IconButton
-                  edge="end"
-                  aria-label="delete"
-                  onClick={() => onDelete(user.id)}
-                  sx={{
-                    color: '#f44336ff', // cor padrão
-                    '&:hover': { color: '#c62828' } // vermelho escuro ao passar o mouse
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              }
-            >
-              <ListItemText
-                primary={`${user.name} (${user.Sector?.name || 'Sem setor'})`}
-                secondary={user.email}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </div>
-    </Paper>
-  );
+            <div style={{ height: '350px', overflowY: 'auto' }}>
+                <List>
+                    {/* Exibe uma mensagem se a lista estiver vazia */}
+                    {users.length === 0 && (
+                        <ListItem>
+                            <ListItemText primary="Nenhum usuário cadastrado." />
+                        </ListItem>
+                    )}
+
+                    {users.map(user => (
+                        <ListItem
+                            key={user.id}
+                            // Usamos Box para agrupar os dois botões no secondaryAction
+                            secondaryAction={
+                                <Box> 
+                                    {/* 🚨 BOTÃO DE EDIÇÃO 🚨 */}
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="edit"
+                                        // Chama onEdit e passa o objeto 'user' completo
+                                        onClick={() => onEdit(user)} 
+                                        sx={{
+                                            color: '#1e88e5', // Azul para Edição
+                                            '&:hover': { color: '#0d47a1' },
+                                            marginRight: 1 // Espaçamento entre os ícones
+                                        }}
+                                    >
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+
+                                    {/* BOTÃO DE DELETAR (Original) */}
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="delete"
+                                        onClick={() => onDelete(user.id)}
+                                        sx={{
+                                            color: '#f44336ff',
+                                            '&:hover': { color: '#c62828' }
+                                        }}
+                                    >
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                </Box>
+                            }
+                        >
+                            <ListItemText
+                                primary={`${user.name} (${user.Sector?.name || 'Sem setor'})`}
+                                secondary={user.email}
+                            />
+                        </ListItem>
+                    ))}
+                </List>
+            </div>
+        </Paper>
+    );
 }
 
 export default UserList;

@@ -1,26 +1,20 @@
+// backend/routes/products.js (AJUSTADO)
+
 const express = require('express');
 const router = express.Router();
-// backend/routes/products.js (VERIFICAÇÃO)
+const ProductController = require('../controllers/ProductController');
+const protect = require('../middleware/auth');
+const checkRole = require('../middleware/permission');
 
-const productController = require('../controllers/ProductController');
-// 🚨 Importação correta do middleware (desestruturada) 🚨
-const { protect: authenticateToken } = require('../middleware/auth'); 
+// 🚨 Permite ADMIN e VENDEDOR 🚨
+const allowedProductRoles = ['ADMIN', 'VENDEDOR'];
 
-// ...
-router.get('/', authenticateToken, productController.getAllProducts);
-// ...
-// 🚨 Rotas Protegidas pelo JWT 🚨
+// A função GET (lista de produtos) será a mais crítica (filtragem por setor)
+router.get('/', protect, ProductController.getAllProducts); // Vamos tratar a permissão no Controller
 
-// [GET] Listar todos os produtos
-router.get('/', authenticateToken, productController.getAllProducts);
-
-// [POST] Criar novo produto
-router.post('/', authenticateToken, productController.createProduct);
-
-// [PUT] Atualizar produto por ID
-router.put('/:id', authenticateToken, productController.updateProduct);
-
-// [DELETE] Excluir produto por ID
-router.delete('/:id', authenticateToken, productController.deleteProduct);
+// Criação, Edição e Deleção de Produtos
+router.post('/', protect, checkRole(allowedProductRoles), ProductController.createProduct);
+router.put('/:id', protect, checkRole(allowedProductRoles), ProductController.updateProduct);
+router.delete('/:id', protect, checkRole(allowedProductRoles), ProductController.deleteProduct);
 
 module.exports = router;

@@ -1,45 +1,54 @@
-// backend/middleware/auth.js (VERSÃO FINAL LIMPA)
+// backend/middleware/auth.js (EXEMPLO DE AJUSTE)
 
 const jwt = require('jsonwebtoken');
-// REMOVIDOS: const dotenv = require('dotenv');
-// REMOVIDO: dotenv.config();
+const User = require('../models/User'); // Certifique-se de que o Model User está correto
+const Sector = require('../models/Sector'); // E o Model Sector
 
-// O segredo é lido do ambiente, confiando que foi carregado ANTES (pelo server.js)
-const JWT_SECRET = process.env.JWT_SECRET;
-
-// Adicionamos a verificação de segurança aqui também, já que este é um módulo de topo
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET não está definido nas variáveis de ambiente! O middleware falhou.");
-}
-
-
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
     let token;
 
-    // 1. Verifica se o token está no cabeçalho Authorization (Bearer Token)
+    // 1. Verifica se o token está presente no header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // Extrai o token, removendo o prefixo 'Bearer '
+            // Obtém o token do header
             token = req.headers.authorization.split(' ')[1];
 
-            // 2. Verifica e decodifica o token
-            const decoded = jwt.verify(token, JWT_SECRET); // Usa o JWT_SECRET limpo
+            // 2. Decodifica o token para obter o ID
+            const decoded = jwt.verify(token, process.env.JWT_SECRET); 
 
-            // 3. Anexa os dados do usuário do token à requisição
-            req.user = decoded; 
-            
-            // Continua para a próxima função da rota
+            // 🚨 3. BUSCA O USUÁRIO E INCLUI ROLE E SETORES 🚨
+            const user = await User.findByPk(decoded.id, {
+                attributes: ['id', 'name', 'email', 'role'], // Seleciona atributos básicos e a ROLE
+                include: [{ // Inclui os setores vinculados (relacionamento N:N)
+                    model: Sector,
+                    as: 'Sectors', // Usa o alias definido nas associações
+                    attributes: ['id', 'name'],
+                    through: { attributes: [] } // Não inclui os campos da tabela de junção
+                }]
+            });
+
+            if (!user) {
+                return res.status(401).json({ error: 'Não autorizado, usuário não encontrado.' });
+            }
+
+            // 4. Anexa o usuário à requisição (apenas as informações que o middleware de permissão precisa)
+            req.user = {
+                id: user.id,
+                role: user.role,
+                // Mapeia a lista de IDs de setores para fácil uso
+                sectorIds: user.Sectors.map(sector => sector.id) 
+            };
+
             next();
         } catch (error) {
-            // Se o token for inválido, expirado, etc.
-            console.error('Erro de Autenticação:', error.message);
-            res.status(401).json({ message: 'Não autorizado, token falhou.' });
+            console.error(error);
+            return res.status(401).json({ error: 'Não autorizado, token falhou.' });
         }
     }
 
     if (!token) {
-        res.status(401).json({ message: 'Não autorizado, nenhum token.' });
+        return res.status(401).json({ error: 'Não autorizado, nenhum token.' });
     }
 };
 
-module.exports = { protect };
+module.exports = protect;
