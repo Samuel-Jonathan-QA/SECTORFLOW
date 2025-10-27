@@ -1,13 +1,12 @@
 <h1>SectorFlow | Sistema de Gestão Setorizada</h1>
 
 <p>
-
+  
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens&logoColor=white)](https://jwt.io/)
 [![Status](https://img.shields.io/badge/Status-Desenvolvimento-blue?style=for-the-badge)](/status)
-
 </p>
 
 <hr>
@@ -16,12 +15,13 @@
 
 <p>
 O <strong>SectorFlow</strong> é um sistema full-stack projetado para centralizar e gerenciar recursos (<strong>Usuários</strong>, <strong>Setores</strong> e <strong>Produtos</strong>) com base em segmentação.
-O foco principal é a <strong>segurança</strong> e a <strong>separação de responsabilidades</strong> através de uma API REST protegida por <strong>JSON Web Tokens (JWT)</strong>.
+O foco principal é a <strong>segurança</strong> e a <strong>separação de responsabilidades</strong> através de uma API REST protegida por <strong>JSON Web Tokens (JWT)</strong> e <strong>Controle de Acesso Baseado em Papéis (Role-Based Access Control - RBAC)</strong>.
 </p>
 
 <h3>📋 Fases Atuais</h3>
 <ul>
-  <li><strong>Fundação e Segurança:</strong> ✅ Completa</li>
+  <li><strong>Fundação e Segurança (JWT, Bcrypt, Roles):</strong> ✅ Completa</li>
+  <li><strong>CRUD Usuários:</strong> ✅ Completa (com autenticação e autorização por Role)</li>
   <li><strong>CRUD Setores:</strong> ⚙️ Pendente</li>
   <li><strong>CRUD Produtos:</strong> ⚙️ Pendente</li>
 </ul>
@@ -65,7 +65,7 @@ O foco principal é a <strong>segurança</strong> e a <strong>separação de res
 O projeto segue uma arquitetura <strong>Full-Stack Separada</strong>, onde a comunicação é feita exclusivamente via API REST:
 </p>
 <ul>
-  <li><strong>Backend (API Node.js/Express):</strong> Segue o padrão <strong>MVC (Model-View-Controller)</strong>, com foco na separação da lógica de acesso a dados (Models) e regras de negócio (Controllers).</li>
+  <li><strong>Backend (API Node.js/Express):</strong> Segue o padrão <strong>MVC (Model-View-Controller)</strong>, com foco na separação da lógica de acesso a dados (Models) e regras de negócio (Controllers). Utiliza um sistema de <strong>Setup de Associações Centralizado</strong> para evitar dependências circulares.</li>
   <li><strong>Frontend (React):</strong> Utiliza uma <strong>Arquitetura Baseada em Componentes</strong> (similar ao MVVM), separando a lógica de estado e comunicação de dados (Pages/View Model) da apresentação da interface (Components/View).</li>
 </ul>
 
@@ -74,9 +74,10 @@ O projeto segue uma arquitetura <strong>Full-Stack Separada</strong>, onde a com
 <pre>
 projeto/
 ├── backend/                  # API REST (Node.js/Express)
+│   ├── config/               # Configurações de DB e Associações
 │   ├── models/               # Esquemas do DB (Sequelize)
 │   ├── routes/               # Endpoints (auth.js, users.js, etc.)
-│   ├── middleware/           # Middleware de Autenticação (auth.js)
+│   ├── middleware/           # Middleware de Autenticação e Permissão
 │   └── server.js             # Ponto de inicialização
 └── frontend/                 # Aplicação Cliente (React)
     ├── src/
@@ -100,7 +101,13 @@ npm install
 # Cria o arquivo de ambiente (.env)
 echo "PORT=3001\nJWT_SECRET=sua_chave_secreta_forte" > .env
 
-# Inicia o servidor e sincroniza o banco de dados (SQLite)
+# 🚨 Setup do Banco de Dados (SQLite) 🚨
+# 1. Cria as tabelas
+sequelize db:migrate
+# 2. Popula as tabelas com usuários/setores iniciais
+sequelize db:seed:all
+
+# Inicia o servidor 
 npm start
 </code></pre>
 
@@ -137,12 +144,12 @@ npm start
     <tr>
       <td><strong>Email</strong></td>
       <td><code>admin@sectorflow.com</code></td>
-      <td>Usuário padrão</td>
+      <td>Usuário padrão (Role: ADMIN)</td>
     </tr>
     <tr>
       <td><strong>Senha</strong></td>
       <td><code>123</code></td>
-      <td>Armazenada de forma hashada</td>
+      <td>Senha de teste. Armazenada de forma hashada via Bcrypt.</td>
     </tr>
   </tbody>
 </table>
@@ -153,11 +160,10 @@ npm start
 
 <pre><code>Authorization: Bearer [TOKEN_JWT_GERADO_PELO_LOGIN]</code></pre>
 
-<p>O middleware <code>backend/middleware/auth.js</code> valida o token antes de conceder acesso à rota.</p>
+<p>O middleware <code>backend/middleware/auth.js</code> valida o token e o <code>backend/middleware/permission.js</code> verifica a Role antes de conceder acesso à rota.</p>
 
 <hr>
 
 <p align="center">
 <strong>💻 Automação, café e paciência — nessa ordem.</strong>
 </p>
-
