@@ -1,26 +1,37 @@
-// backend/models/UserSector.js (NOVO ARQUIVO)
+// backend/models/UserSector.js (CORRIGIDO E SIMPLIFICADO)
 
 const sequelize = require('../config/database');
 const { DataTypes } = require('sequelize');
-const User = require('./User');
-const Sector = require('./Sector');
+
+// 🚨 REMOVA AS IMPORTAÇÕES DE MODELOS CRUZADOS! 🚨
+// const User = require('./User'); 
+// const Sector = require('./Sector');
 
 const UserSector = sequelize.define('UserSector', {
-    // ID é automático, mas definimos os IDs das chaves estrangeiras
+    // Apenas as chaves estrangeiras, sem a referência explícita do modelo aqui,
+    // pois a referência será feita no setupAssociations.js
     userId: {
         type: DataTypes.INTEGER,
-        references: { model: User, key: 'id' },
-        primaryKey: true // Define a combinação de chaves como primária
+        primaryKey: true
     },
     sectorId: {
         type: DataTypes.INTEGER,
-        references: { model: Sector, key: 'id' },
-        primaryKey: true // Define a combinação de chaves como primária
+        primaryKey: true
     }
 }, {
+    // É importante manter o nome da tabela (que será usada no Seeder e Associações)
     tableName: 'UserSectors',
-    // Não crie timestamps nesta tabela para simplicidade, se não forem necessários
-    timestamps: false
+    timestamps: false,
+    // Garante que o índice composto (userId, sectorId) seja único
+    indexes: [
+        {
+            unique: true,
+            fields: ['userId', 'sectorId']
+        }
+    ]
 });
+
+// A associação real será definida em backend/config/setupAssociations.js
+// Onde ele importará User, Sector e UserSector e fará a ligação.
 
 module.exports = UserSector;

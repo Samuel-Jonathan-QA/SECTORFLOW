@@ -1,4 +1,4 @@
-// backend/controllers/AuthController.js (COMPLETO E FINALIZADO)
+// backend/controllers/AuthController.js (CORRIGIDO PARA USAR SCOPE)
 
 const User = require('../models/User');
 const Sector = require('../models/Sector');
@@ -25,10 +25,12 @@ exports.login = async (req, res) => {
 
     try {
         // 2. Encontrar o usuário e buscar seus setores
-        const user = await User.findOne({
+        // 🚨 CORREÇÃO APLICADA AQUI: Usando o scope('withPassword') 🚨
+        const user = await User.scope('withPassword').findOne({
             where: { email },
-            // 🚨 CORREÇÃO CRÍTICA: FORÇA A INCLUSÃO DO ATRIBUTO 'password' 🚨
-            attributes: { include: ['password'] },
+            // A linha attributes: { include: ['password'] } FOI REMOVIDA,
+            // pois o scope('withPassword') faz o mesmo trabalho de forma mais limpa.
+
             // Inclui os setores associados
             include: [{ model: Sector, as: 'Sectors', attributes: ['id'] }]
         });
@@ -50,6 +52,8 @@ exports.login = async (req, res) => {
         // 4. Sucesso: Gera o Token JWT e monta o objeto do usuário
         const token = generateToken(user.id);
 
+        // Cria uma versão do usuário sem a senha (que seria incluída pelo scope)
+        // A Sequelize normalmente já omite, mas garantimos a limpeza
         const userToReturn = {
             id: user.id,
             name: user.name,
@@ -65,6 +69,7 @@ exports.login = async (req, res) => {
         });
 
     } catch (error) {
+        // O erro 'User.findOne is not a function' será pego aqui
         console.error('Erro no login:', error.message);
         res.status(500).json({ error: 'Erro interno do servidor.' });
     }
