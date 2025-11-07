@@ -13,36 +13,37 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// 🚨 DEFINIÇÃO DO TEMA: Corrigindo o "theme is not defined" 🚨
+// DEFINIÇÃO DO TEMA
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#187bbd', // Cor primária (azul SectorFlow)
+    palette: {
+        primary: {
+            main: '#187bbd', // Cor primária (azul SectorFlow)
+        },
+        secondary: {
+            main: '#f44336', // Cor secundária
+        },
     },
-    secondary: {
-      main: '#f44336', // Cor secundária
+    typography: {
+        fontFamily: 'Roboto, Arial, sans-serif',
     },
-  },
-  typography: {
-    fontFamily: 'Roboto, Arial, sans-serif',
-  },
 });
-// 🚨 FIM DA DEFINIÇÃO DO TEMA 🚨
+// FIM DA DEFINIÇÃO DO TEMA 
 
 
 function App() {
     const [loggedUser, setLoggedUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); // NOVO: Estado de carregamento
+    const [isLoading, setIsLoading] = useState(true); // Estado de carregamento
 
     // 1. Lógica para persistência de Login
     useEffect(() => {
+        // Buscamos o usuário no Local Storage para persistência
         const user = localStorage.getItem('loggedUser');
         if (user) {
             try {
                 setLoggedUser(JSON.parse(user));
             } catch (e) {
                 // Limpa Local Storage se o JSON estiver corrompido
-                localStorage.removeItem('loggedUser'); 
+                localStorage.removeItem('loggedUser');
                 console.error("Erro ao fazer parse do usuário salvo.");
             }
         }
@@ -53,12 +54,15 @@ function App() {
     const getUserRole = () => loggedUser?.user?.role;
     const getUserSectorIds = () => loggedUser?.user?.sectorIds || [];
 
+    // A função handleLogout não é mais estritamente necessária aqui, 
+    // mas a mantemos como utilitário se for usada em outro lugar.
+    // O DashboardCards agora usa setLoggedUser e a função logout do api.js
     const handleLogout = () => {
         localStorage.removeItem('loggedUser');
         setLoggedUser(null);
     };
-    
-    // 🚨 2. CHECAGEM DE CARREGAMENTO GLOBAL 🚨
+
+    // 2. CHECAGEM DE CARREGAMENTO GLOBAL 
     if (isLoading) {
         return (
             <ThemeProvider theme={theme}>
@@ -69,7 +73,7 @@ function App() {
             </ThemeProvider>
         );
     }
-    
+
     // 3. Renderização Principal (só ocorre após o carregamento)
     return (
         <ThemeProvider theme={theme}>
@@ -77,18 +81,22 @@ function App() {
             <Router>
                 <Routes>
                     {/* Rota de Login/Home (Redireciona se logado) */}
-                    <Route 
-                        path="/" 
-                        element={loggedUser ? <Navigate to="/dashboard" replace /> : <Home setLoggedUser={setLoggedUser} />} 
+                    <Route
+                        path="/"
+                        element={loggedUser ? <Navigate to="/dashboard" replace /> : <Home setLoggedUser={setLoggedUser} />}
                     />
-                    
-                    {/* ROTAS PROTEGIDAS INDIVIDUAIS (SEM LAYOUT PAI) */}
+
+                    {/* ROTAS PROTEGIDAS INDIVIDUAIS */}
                     <Route
                         path="/dashboard"
                         element={
                             <ProtectedRoute loggedUser={loggedUser}>
-                                {/* Passamos onLogout para DashboardCards, caso haja um botão de logout lá */}
-                                <DashboardCards loggedUser={loggedUser} onLogout={handleLogout} /> 
+                                {/* 🚨 INTEGRAÇÃO DO BOTÃO DE LOGOUT 🚨
+                                     Passamos setLoggedUser para que DashboardCards possa limpar o estado global. */}
+                                <DashboardCards
+                                    loggedUser={loggedUser}
+                                    setLoggedUser={setLoggedUser} // Propriedade necessária para o logout
+                                />
                             </ProtectedRoute>
                         }
                     />
@@ -112,15 +120,15 @@ function App() {
                         path="/products"
                         element={
                             <ProtectedRoute loggedUser={loggedUser}>
-                                <ProdutosPage 
-                                    loggedUser={loggedUser} 
-                                    userRole={getUserRole()} 
-                                    userSectorIds={getUserSectorIds()} 
+                                <ProdutosPage
+                                    loggedUser={loggedUser}
+                                    userRole={getUserRole()}
+                                    userSectorIds={getUserSectorIds()}
                                 />
                             </ProtectedRoute>
                         }
                     />
-                    
+
                     {/* Rota de fallback para qualquer coisa que não seja mapeada */}
                     <Route path="*" element={<Navigate to="/" replace />} />
 

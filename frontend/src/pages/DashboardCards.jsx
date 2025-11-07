@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Paper, Typography, Box } from '@mui/material';
+// 🚨 Importações do MUI: Adicionado 'Button' 🚨
+import { Grid, Paper, Typography, Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import API from '../api';
+// 🚨 Importações de API: Adicionado 'logout' 🚨
+import API, { logout } from '../api';
 
-function DashboardCards({ loggedUser }) {
+// O componente agora DEVE receber setLoggedUser do componente pai (App.js)
+function DashboardCards({ loggedUser, setLoggedUser }) {
     const navigate = useNavigate();
+
+    // 🚨 Função de Logout 🚨
+    const handleLogout = () => {
+        logout();             // Limpa o token e headers (do api.js)
+        setLoggedUser(null);  // Limpa o estado global do usuário logado
+        navigate('/');        // Redireciona para a página inicial (que deve mostrar o login)
+    };
 
     // 🚨 1. EXTRAIR A ROLE DO USUÁRIO LOGADO 🚨
     const userRole = loggedUser?.user?.role;
-    // Opcional: extrair sectorIds se o dashboard for mostrar dados filtrados
-    // const userSectorIds = loggedUser?.user?.sectorIds || [];
 
     const [sectors, setSectors] = useState([]);
     const [users, setUsers] = useState([]);
@@ -17,34 +25,29 @@ function DashboardCards({ loggedUser }) {
 
     useEffect(() => {
         fetchData();
-    }, [userRole]); // 🚨 Dependência adicionada para refetch se o usuário mudar a role (opcional)
+    }, [userRole]);
 
     const fetchData = async () => {
-        // Define quais endpoints buscar. Se não for ADMIN, não precisa buscar users/sectors.
         const endpoints = [];
 
         // 🚨 2. LÓGICA CONDICIONAL DE FETCH 🚨
         if (userRole === 'ADMIN') {
             endpoints.push(API.get('/sectors'));
             endpoints.push(API.get('/users'));
-            // Assumindo que a rota de products lida com o filtro para o VENDEDOR
-            endpoints.push(API.get('/products')); 
+            endpoints.push(API.get('/products'));
         } else if (userRole === 'VENDEDOR' || userRole === 'USER') {
-            // Se for Vendedor, ele SÓ precisa buscar produtos (a contagem de users/sectors será 0)
             endpoints.push(API.get('/products'));
         }
 
         try {
             if (endpoints.length > 0) {
                 const results = await Promise.all(endpoints);
-                
-                // Mapeia os resultados para os estados com base no que foi buscado
+
                 if (userRole === 'ADMIN') {
                     setSectors(results[0].data);
                     setUsers(results[1].data);
                     setProducts(results[2].data);
                 } else if (userRole === 'VENDEDOR' || userRole === 'USER') {
-                    // Se só buscou produtos
                     setProducts(results[0].data);
                 }
             }
@@ -55,30 +58,40 @@ function DashboardCards({ loggedUser }) {
 
     // 🚨 3. LÓGICA CONDICIONAL DOS CARDS 🚨
     const baseCards = [
-        // Card de Setores e Usuários SÓ para ADMIN
         ...(userRole === 'ADMIN' ? [
             { label: 'Setores', count: sectors.length, path: '/sectors' },
             { label: 'Usuários', count: users.length, path: '/users' },
         ] : []),
-        
-        // Card de Produtos (visível para todos)
+
         { label: 'Produtos', count: products.length, path: '/products' },
     ];
 
     return (
         <Box sx={{ padding: 4 }}>
-            {/* Boas-vindas */}
-            <Typography variant="h4" gutterBottom fontWeight="bold">
-                Olá, {loggedUser?.user?.name || 'Usuário'}!
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                {/* Boas-vindas */}
+                <Typography variant="h4" gutterBottom fontWeight="bold">
+                    Olá, {loggedUser?.user?.name || 'Usuário'}!
+                </Typography>
+
+                {/* 🚨 BOTÃO DE LOGOUT 🚨 */}
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={handleLogout}
+                    size="large"
+                >
+                    Sair
+                </Button>
+            </Box>
+
             <Typography variant="subtitle1" gutterBottom color="textSecondary">
                 Bem-vindo ao painel de controle. Aqui você acompanha rapidamente os principais indicadores.
             </Typography>
 
             {/* Cards */}
             <Grid container spacing={4} sx={{ marginTop: 2 }}>
-                {/* Itera sobre a lista de cards JÁ FILTRADA */}
-                {baseCards.map((card) => ( 
+                {baseCards.map((card) => (
                     <Grid item xs={12} sm={4} key={card.label}>
                         <Paper
                             elevation={3}
