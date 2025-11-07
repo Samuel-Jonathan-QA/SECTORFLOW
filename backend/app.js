@@ -1,7 +1,7 @@
-// backend/app.js (VERSÃO FINAL LIMPA E SEGURA - SEM DESTRUIÇÃO DE DADOS)
+// backend/app.js 
 const express = require('express');
 const cors = require('cors');
-const sequelize = require('./backend/config/database');
+const sequelize = require('./config/database');
 const sectorRoutes = require('./routes/sectors');
 const userRoutes = require('./routes/users');
 const productRoutes = require('./routes/products');
