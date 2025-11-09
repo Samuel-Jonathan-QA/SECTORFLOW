@@ -1,73 +1,130 @@
-// frontend/src/pages/SetoresPage.jsx (VERSÃO FINAL COM RESTRIÇÃO DE TELA)
+// frontend/src/pages/SetoresPage.jsx (Padronizado com Modal de Edição)
 
-import { useState, useEffect, useCallback } from 'react'; // Adicionado useCallback para limpeza
-import { Container, Typography, Grid } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box } from '@mui/material'; 
 import SectorForm from '../components/SectorForm';
 import SectorList from '../components/SectorList';
 import API from '../api';
 import { toast } from 'react-toastify';
 
-// 🚨 NOVO: O componente deve receber a role 🚨
+// O componente deve receber a role
 function SetoresPage({ userRole }) { 
-  const [sectors, setSectors] = useState([]);
-  
-  // 🚨 Checa se o usuário pode gerenciar setores 🚨
-  const canManageSectors = userRole === 'ADMIN';
+    const [sectors, setSectors] = useState([]);
+    
+    // Estados para a Modal de Edição
+    const [openModal, setOpenModal] = useState(false);
+    const [editingSector, setEditingSector] = useState(null); 
 
-  // Usa useCallback para evitar recriação desnecessária da função
-  const fetchSectors = useCallback(async () => {
-    try {
-      // Esta rota foi corrigida para exigir autenticação
-      const res = await API.get('/sectors'); 
-      setSectors(res.data);
-    } catch (error) {
-       // Se o GET falhar (ex: token inválido ou não autorizado), a lista fica vazia.
-       // Adicionamos um toast de erro para feedback.
-       toast.error('Não foi possível carregar a lista de setores.');
+    // Lógica CRÍTICA de permissão (ADMIN)
+    const canManageSectors = userRole && userRole.toUpperCase() === 'ADMIN';
+
+    // Refatora a busca para incluir tratamento de erro e usar useCallback
+    const fetchSectors = useCallback(async () => {
+        // Se não for ADMIN, não faz a chamada (o backend bloquearia)
+        if (!canManageSectors) {
+            setSectors([]); // Garante que a lista está vazia
+            return;
+        }
+        
+        try {
+            const res = await API.get('/sectors'); 
+            setSectors(res.data);
+        } catch (error) {
+            console.error('Erro ao buscar setores:', error);
+            toast.error('Não foi possível carregar a lista de setores. Permissão negada.');
+        }
+    }, [canManageSectors]); // Depende de canManageSectors
+
+    useEffect(() => {
+        fetchSectors();
+    }, [fetchSectors]);
+
+    // Lógica da Modal
+    const handleEditClick = (sector) => {
+        setEditingSector(sector);
+        setOpenModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setOpenModal(false);
+        setEditingSector(null);
+        fetchSectors(); // Recarrega a lista após fechar (criação ou edição)
+    };
+    
+    // Lógica de Deleção
+    const handleDeleteSector = async (id) => {
+        try {
+            await API.delete(`/sectors/${id}`); 
+            fetchSectors();
+            toast.success('Setor deletado com sucesso!');
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Erro ao deletar setor. Permissão insuficiente.');
+        }
+    };
+    
+    // ----------------------------------------------------
+    // 🚨 RENDERIZAÇÃO CONDICIONAL DA TELA (Acesso Negado) 🚨
+    // ----------------------------------------------------
+    if (!canManageSectors) {
+        return (
+            <Container maxWidth="md" style={{ marginTop: '50px', textAlign: 'center' }}>
+                <Typography variant="h4" color="error" gutterBottom>
+                    Acesso Negado
+                </Typography>
+                <Typography variant="h6">
+                    Você não tem permissão de administrador para gerenciar setores.
+                </Typography>
+            </Container>
+        );
     }
-  }, []);
+    
+    // Se for ADMIN, renderiza a tela de Gerenciamento completa
+    return (
+        <Container maxWidth="lg" style={{ marginTop: '30px' }}>
+            <Typography variant="h4" gutterBottom>
+                Gerenciamento de Setores
+            </Typography>
 
-  useEffect(() => {
-    fetchSectors();
-  }, [fetchSectors]);
+            <Grid container spacing={3}>
+                {/* COLUNA ESQUERDA: Criação de Novo Setor */}
+                <Grid item xs={12} md={6}>
+                    <Typography variant="h5" gutterBottom>
+                        Criar Novo Setor
+                    </Typography>
+                    <SectorForm 
+                        onFinish={handleCloseModal}
+                        // Não passamos currentSector, então este SectorForm é para CRIAÇÃO
+                    />
+                </Grid>
 
-  const handleDeleteSector = async (id) => {
-    try {
-      await API.delete(`/sectors/${id}`); // O Backend verifica a role ADMIN
-      setSectors(sectors.filter(s => s.id !== id));
-      toast.success('Setor deletado com sucesso!');
-    } catch (error) {
-       // Mensagem de erro amigável, caso o Backend retorne 403
-       toast.error(error.response?.data?.error || 'Erro ao deletar setor. Permissão insuficiente.');
-    }
-  };
+                {/* COLUNA DIREITA: Lista de Setores */}
+                <Grid item xs={12} md={6}>
+                    <Typography variant="h5" gutterBottom>
+                        Lista de Setores
+                    </Typography>
+                    <SectorList
+                        sectors={sectors} 
+                        onDelete={handleDeleteSector} 
+                        onEdit={handleEditClick} // Passa o clique para abrir a modal de edição
+                        userRole={userRole}
+                    />
+                </Grid>
+            </Grid>
 
-  return (
-    <Container maxWidth="md" style={{ marginTop: '30px' }}>
-      <Typography variant="h4" gutterBottom>
-        Gerenciamento de Setores
-      </Typography>
-
-      <Grid container spacing={3}>
-        {/* 🚨 CONDIÇÃO DE RENDERIZAÇÃO: Apenas ADMIN vê o Formulário 🚨 */}
-        {canManageSectors && (
-          <Grid item xs={12}>
-            <SectorForm onAdd={fetchSectors} />
-          </Grid>
-        )}
-
-        {/* Lista de Setores */}
-        <Grid item xs={12}>
-          <SectorList 
-            sectors={sectors} 
-            onDelete={handleDeleteSector} 
-            // 🚨 Passa a role para o SectorList esconder o botão de delete (ajuste feito na revisão anterior) 🚨
-            userRole={userRole}
-          />
-        </Grid>
-      </Grid>
-    </Container>
-  );
+            {/* MODAL DE EDIÇÃO */}
+            <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+                <DialogTitle>
+                    {editingSector ? 'Editar Setor' : 'Criar Setor'}
+                </DialogTitle>
+                <DialogContent>
+                    <SectorForm 
+                        currentSector={editingSector} 
+                        onFinish={handleCloseModal}
+                    />
+                </DialogContent>
+            </Dialog>
+        </Container>
+    );
 }
 
 export default SetoresPage;

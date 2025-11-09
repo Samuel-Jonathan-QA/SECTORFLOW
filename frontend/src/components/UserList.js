@@ -1,15 +1,15 @@
-// UserList.jsx (REFATORADO COM EDIÇÃO)
+// frontend/src/components/UserList.jsx (PADRÃO DE REFERÊNCIA)
 
 import { List, ListItem, ListItemText, Typography, Paper, IconButton, Box } from '@mui/material'; // Adicionado Box
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit'; // 🚨 NOVO ÍCONE DE EDIÇÃO 🚨
+import EditIcon from '@mui/icons-material/Edit'; 
 
-// 🚨 Recebe a nova prop 'onEdit' 🚨
+// Recebe a nova prop 'onEdit' 
 function UserList({ users, onDelete, onEdit }) { 
     return (
         <Paper elevation={3} style={{ padding: '10px' }}>
 
-            <div style={{ height: '350px', overflowY: 'auto' }}>
+            <div style={{ height: '440px', overflowY: 'auto' }}>
                 <List>
                     {/* Exibe uma mensagem se a lista estiver vazia */}
                     {users.length === 0 && (
@@ -24,7 +24,7 @@ function UserList({ users, onDelete, onEdit }) {
                             // Usamos Box para agrupar os dois botões no secondaryAction
                             secondaryAction={
                                 <Box> 
-                                    {/* 🚨 BOTÃO DE EDIÇÃO 🚨 */}
+                                    {/* BOTÃO DE EDIÇÃO */}
                                     <IconButton
                                         edge="end"
                                         aria-label="edit"
@@ -39,7 +39,7 @@ function UserList({ users, onDelete, onEdit }) {
                                         <EditIcon fontSize="small" />
                                     </IconButton>
 
-                                    {/* BOTÃO DE DELETAR (Original) */}
+                                    {/* BOTÃO DE DELETAR */}
                                     <IconButton
                                         edge="end"
                                         aria-label="delete"
