@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/SECTORFLOW/static/css/main.2a9a26f2.css",
+    "main.js": "/SECTORFLOW/static/js/main.3c894713.js",
+    "index.html": "/SECTORFLOW/index.html",
+    "main.2a9a26f2.css.map": "/SECTORFLOW/static/css/main.2a9a26f2.css.map",
+    "main.3c894713.js.map": "/SECTORFLOW/static/js/main.3c894713.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.2a9a26f2.css",
+    "static/js/main.3c894713.js"
+  ]
+}
