@@ -5,9 +5,6 @@ const { sequelize } = require('../config/database');
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
-// Não precisa da importação de Sector aqui.
-// const Sector = require('./Sector'); // <-- CORRETO: REMOVIDA
-
 const User = sequelize.define('User', {
     name: { type: DataTypes.STRING, allowNull: false },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
@@ -20,8 +17,8 @@ const User = sequelize.define('User', {
         }
     },
     role: {
-        type: DataTypes.ENUM('ADMIN', 'VENDEDOR', 'USER'),
-        defaultValue: 'USER',
+        type: DataTypes.ENUM('ADMIN', 'VENDEDOR'),
+        defaultValue: 'VENDEDOR',
         allowNull: false
     },
 }, {

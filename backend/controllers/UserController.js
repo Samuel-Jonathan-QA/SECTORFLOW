@@ -41,23 +41,24 @@ const getOneUser = async (req, res) => {
 
 // [POST] Criar um novo usuário (REFATORADO N:N)
 const createUser = async (req, res) => {
-    // sectorIds deve ser um array de IDs.
+    // 🚨 NOVO: Apenas sectorIds (plural/array) é desestruturado 🚨
     const { email, password, role, sectorIds, ...rest } = req.body; 
 
     if (!email || !password || !role) { 
         return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
     }
 
-    // Validação de Vendedor: deve ter setores
-    if (role === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
+    // ✅ VALIDAÇÃO ROBUSTA: Checa se é VENDEDOR E se o array sectorIds está ausente OU vazio
+    if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
         return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
     }
+    // FIM DA CORREÇÃO
 
     try {
         // A senha será hasheada automaticamente pelo hook beforeCreate no modelo User.js
         const newUser = await User.create({ email, password, role, ...rest }); 
 
-        // Vincula os setores
+        // Vincula os setores (o setSectors espera um array de IDs)
         if (sectorIds && sectorIds.length > 0) {
             await newUser.setSectors(sectorIds); 
         }

@@ -16,22 +16,17 @@ const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.p
 });
 
 // --- 2. FUNÇÃO DE SEEDING ---
-// 🚨 CORREÇÃO: As importações dos modelos foram movidas para dentro desta função 🚨
-// Isso garante que a instância 'sequelize' exista antes que os modelos tentem usá-la.
 const runInitialSeed = async () => {
     // Importa os modelos aqui dentro, após 'sequelize' estar definida.
     const User = require('../models/User'); 
     const Sector = require('../models/Sector');
-    // const UserSector = require('../models/UserSector'); // Não é necessário importar aqui, pois é tabela de junção
 
     // 1. CRIE SENHAS
     const adminPassword = await bcrypt.hash('123', 10); 
-    const vendorPassword = await bcrypt.hash('123', 10); 
 
     // 2. INSERIR USUÁRIOS
     const [adminUser, vendorUser] = await User.bulkCreate([
-        { name: 'Administrador Principal', email: 'admin@sectorflow.com', password: adminPassword, role: 'ADMIN' },
-        { name: 'Vendedor João', email: 'joao.vendas@sectorflow.com', password: vendorPassword, role: 'VENDEDOR' }
+        { name: 'Administrador Principal', email: 'admin@sectorflow.com', password: adminPassword, role: 'ADMIN' }
     ]);
 
     // 3. INSERIR SETORES
@@ -40,11 +35,8 @@ const runInitialSeed = async () => {
         { name: 'Suporte' },
         { name: 'Vendas' }
     ]);
-
-    // 4. VINCULAR SETORES AO VENDEDOR (Usando o método de associação)
-    await vendorUser.setSectors([dev.id, vendas.id]);
     
-    console.log('Dados iniciais (Admin, Vendedor, Setores) inseridos com sucesso.');
+    console.log('Dados iniciais (Admin, Setores) inseridos com sucesso.');
 };
 
 // --- 3. FUNÇÃO DE INICIALIZAÇÃO ---

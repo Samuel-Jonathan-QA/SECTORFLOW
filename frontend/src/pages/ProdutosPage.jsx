@@ -1,12 +1,12 @@
 // frontend/src/pages/ProdutosPage.jsx (Padronizado com Modal de Edição e Botão Voltar)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button } from '@mui/material'; // 🚨 ATUALIZADO: Importado Button
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button } from '@mui/material'; 
 import ProductForm from '../components/ProductForm';
 import ProductList from '../components/ProductList';
 import API from '../api';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom'; // 🚨 NOVO: Importado useNavigate
+import { useNavigate } from 'react-router-dom'; 
 
 // Recebe as props userRole e userSectorIds
 function ProdutosPage({ userRole, userSectorIds }) {
@@ -106,12 +106,11 @@ function ProdutosPage({ userRole, userSectorIds }) {
     // Se for ADMIN ou VENDEDOR, renderiza a tela de Gerenciamento completa
     return (
         <Container maxWidth="lg" style={{ marginTop: '30px' }}>
-            {/* 🚨 TÍTULO E BOTÃO ALINHADOS */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4">
-                    Gerenciamento de Produtos
-                </Typography>
-            </Box>
+            {/* 🚨 CORREÇÃO: TÍTULO SEM O BOTÃO VOLTAR AO LADO 🚨 */}
+            <Typography variant="h4" gutterBottom>
+                Gerenciamento de Produtos
+            </Typography>
+            {/* FIM DA CORREÇÃO */}
 
             <Grid container spacing={3}>
                 {/* COLUNA ESQUERDA: Criação de Novo Produto */}
@@ -138,15 +137,20 @@ function ProdutosPage({ userRole, userSectorIds }) {
                         userRole={userRole}
                         userSectorIds={userSectorIds}
                     />
+                    
+                    {/* 🚨 NOVO: Alinhamento do botão 'Voltar' ABAIXO da lista 🚨 */}
+                    <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
+                        <Button 
+                            variant="outlined" 
+                            color="secondary" 
+                            onClick={() => navigate('/dashboard')} // Navega para o Dashboard
+                        >
+                            Voltar
+                        </Button>
+                    </Box>
+                    {/* FIM DA CORREÇÃO */}
                 </Grid>
             </Grid>
-                <Button 
-                    variant="outlined" 
-                    color="secondary" 
-                    onClick={() => navigate('/dashboard')} // Navega para o Dashboard
-                >
-                    Voltar
-                </Button>
 
             {/* MODAL DE EDIÇÃO */}
             <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">

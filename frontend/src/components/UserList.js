@@ -55,7 +55,7 @@ function UserList({ users, onDelete, onEdit }) {
                             }
                         >
                             <ListItemText
-                                primary={`${user.name} (${user.Sector?.name || 'Sem setor'})`}
+                                primary={`${user.name} - ${user.role}`}
                                 secondary={user.email}
                             />
                         </ListItem>
