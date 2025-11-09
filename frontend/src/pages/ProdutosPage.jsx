@@ -1,11 +1,12 @@
-// frontend/src/pages/ProdutosPage.jsx (Padronizado com Modal de Edição)
+// frontend/src/pages/ProdutosPage.jsx (Padronizado com Modal de Edição e Botão Voltar)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box } from '@mui/material'; 
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button } from '@mui/material'; // 🚨 ATUALIZADO: Importado Button
 import ProductForm from '../components/ProductForm';
 import ProductList from '../components/ProductList';
 import API from '../api';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom'; // 🚨 NOVO: Importado useNavigate
 
 // Recebe as props userRole e userSectorIds
 function ProdutosPage({ userRole, userSectorIds }) {
@@ -16,6 +17,9 @@ function ProdutosPage({ userRole, userSectorIds }) {
     const [openModal, setOpenModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null); 
     
+    // 🚨 HOOK DE NAVEGAÇÃO 🚨
+    const navigate = useNavigate();
+
     // Lógica de permissão (robusta)
     const userRoleUpperCase = userRole ? userRole.toUpperCase() : '';
     const canManageProducts = userRoleUpperCase === 'ADMIN' || userRoleUpperCase === 'VENDEDOR';
@@ -84,7 +88,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
     };
 
     // ----------------------------------------------------
-    // 🚨 RENDERIZAÇÃO CONDICIONAL DA TELA (Acesso Negado) 🚨
+    // RENDERIZAÇÃO CONDICIONAL DA TELA (Acesso Negado)
     // ----------------------------------------------------
     if (!canManageProducts) {
         return (
@@ -102,9 +106,12 @@ function ProdutosPage({ userRole, userSectorIds }) {
     // Se for ADMIN ou VENDEDOR, renderiza a tela de Gerenciamento completa
     return (
         <Container maxWidth="lg" style={{ marginTop: '30px' }}>
-            <Typography variant="h4" gutterBottom>
-                Gerenciamento de Produtos
-            </Typography>
+            {/* 🚨 TÍTULO E BOTÃO ALINHADOS */}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h4">
+                    Gerenciamento de Produtos
+                </Typography>
+            </Box>
 
             <Grid container spacing={3}>
                 {/* COLUNA ESQUERDA: Criação de Novo Produto */}
@@ -133,6 +140,13 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     />
                 </Grid>
             </Grid>
+                <Button 
+                    variant="outlined" 
+                    color="secondary" 
+                    onClick={() => navigate('/dashboard')} // Navega para o Dashboard
+                >
+                    Voltar
+                </Button>
 
             {/* MODAL DE EDIÇÃO */}
             <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">

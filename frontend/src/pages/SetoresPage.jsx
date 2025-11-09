@@ -1,11 +1,12 @@
-// frontend/src/pages/SetoresPage.jsx (Padronizado com Modal de Edição)
+// frontend/src/pages/SetoresPage.jsx (Padronizado com Modal de Edição e Botão Voltar)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box } from '@mui/material'; 
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button } from '@mui/material'; // 🚨 ATUALIZADO: Importado Button
 import SectorForm from '../components/SectorForm';
 import SectorList from '../components/SectorList';
 import API from '../api';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom'; // 🚨 NOVO: Importado useNavigate
 
 // O componente deve receber a role
 function SetoresPage({ userRole }) { 
@@ -14,6 +15,9 @@ function SetoresPage({ userRole }) {
     // Estados para a Modal de Edição
     const [openModal, setOpenModal] = useState(false);
     const [editingSector, setEditingSector] = useState(null); 
+    
+    // 🚨 HOOK DE NAVEGAÇÃO 🚨
+    const navigate = useNavigate();
 
     // Lógica CRÍTICA de permissão (ADMIN)
     const canManageSectors = userRole && userRole.toUpperCase() === 'ADMIN';
@@ -63,7 +67,7 @@ function SetoresPage({ userRole }) {
     };
     
     // ----------------------------------------------------
-    // 🚨 RENDERIZAÇÃO CONDICIONAL DA TELA (Acesso Negado) 🚨
+    // RENDERIZAÇÃO CONDICIONAL DA TELA (Acesso Negado)
     // ----------------------------------------------------
     if (!canManageSectors) {
         return (
@@ -81,9 +85,12 @@ function SetoresPage({ userRole }) {
     // Se for ADMIN, renderiza a tela de Gerenciamento completa
     return (
         <Container maxWidth="lg" style={{ marginTop: '30px' }}>
-            <Typography variant="h4" gutterBottom>
-                Gerenciamento de Setores
-            </Typography>
+            {/* 🚨 TÍTULO E BOTÃO ALINHADOS */}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h4">
+                    Gerenciamento de Setores
+                </Typography>
+            </Box>
 
             <Grid container spacing={3}>
                 {/* COLUNA ESQUERDA: Criação de Novo Setor */}
@@ -110,6 +117,13 @@ function SetoresPage({ userRole }) {
                     />
                 </Grid>
             </Grid>
+                <Button 
+                    variant="outlined" 
+                    color="secondary" 
+                    onClick={() => navigate('/dashboard')} // Navega para o Dashboard
+                >
+                    Voltar
+                </Button>
 
             {/* MODAL DE EDIÇÃO */}
             <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
