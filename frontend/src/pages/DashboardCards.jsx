@@ -11,14 +11,14 @@ function DashboardCards({ loggedUser, setLoggedUser }) {
 
     // 🚨 Função de Logout 🚨
     const handleLogout = () => {
-        logout();             // Limpa o token e headers (do api.js)
-        setLoggedUser(null);  // Limpa o estado global do usuário logado
-        navigate('/');        // Redireciona para a página inicial (que deve mostrar o login)
+        logout();  // Limpa o token e headers (do api.js)
+        setLoggedUser(null); // Limpa o estado global do usuário logado
+        navigate('/'); // Redireciona para a página inicial (que deve mostrar o login)
     };
 
-    // 🚨 1. EXTRAIR A ROLE DO USUÁRIO LOGADO - CORRIGIDO 🚨
-    // A role está no nível principal do objeto loggedUser
-    const userRole = loggedUser?.role; // <--- CORREÇÃO AQUI
+    // 🚨 1. EXTRAIR A ROLE DO USUÁRIO LOGADO - CORRIGIDO E ROBUSTO 🚨
+    // Aplica .toUpperCase() para garantir que a comparação funcione, independentemente da capitalização.
+    const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : ''; // <--- CORREÇÃO DE ROBUSTEZ AQUI
 
     const [sectors, setSectors] = useState([]);
     const [users, setUsers] = useState([]);
@@ -26,12 +26,12 @@ function DashboardCards({ loggedUser, setLoggedUser }) {
 
     useEffect(() => {
         fetchData();
-    }, [userRole]);
+    }, [userRole]); // userRole agora é garantido ser 'ADMIN', 'VENDEDOR', 'USER' ou ''
 
     const fetchData = async () => {
         const endpoints = [];
 
-        // 🚨 2. LÓGICA CONDICIONAL DE FETCH 🚨
+        // 🚨 2. LÓGICA CONDICIONAL DE FETCH (AGORA ROBUSTA) 🚨
         if (userRole === 'ADMIN') {
             endpoints.push(API.get('/sectors'));
             endpoints.push(API.get('/users'));
@@ -57,7 +57,7 @@ function DashboardCards({ loggedUser, setLoggedUser }) {
         }
     };
 
-    // 🚨 3. LÓGICA CONDICIONAL DOS CARDS 🚨
+    // 🚨 3. LÓGICA CONDICIONAL DOS CARDS (AGORA ROBUSTA) 🚨
     const baseCards = [
         ...(userRole === 'ADMIN' ? [
             { label: 'Setores', count: sectors.length, path: '/sectors' },
@@ -72,7 +72,7 @@ function DashboardCards({ loggedUser, setLoggedUser }) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                 {/* Boas-vindas */}
                 <Typography variant="h4" gutterBottom fontWeight="bold">
-                    Olá, {loggedUser?.name || 'Usuário'}! {/* Também ajustei a extração do nome por segurança */}
+                    Olá, {loggedUser?.name || 'Usuário'}!
                 </Typography>
 
                 {/* 🚨 BOTÃO DE LOGOUT 🚨 */}

@@ -94,7 +94,8 @@ function App() {
                         path="/sectors"
                         element={
                             <ProtectedRoute loggedUser={loggedUser}>
-                                <SetoresPage />
+                               {/* ✅ CORREÇÃO: Passando a role para SetoresPage */}
+                            <SetoresPage userRole={getUserRole()} />
                             </ProtectedRoute>
                         }
                     />
