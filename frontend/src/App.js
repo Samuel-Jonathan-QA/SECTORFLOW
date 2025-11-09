@@ -9,6 +9,7 @@ import UsuariosPage from './pages/UsuariosPage';
 import ProdutosPage from './pages/ProdutosPage';
 import Home from './pages/Home';
 import { ToastContainer } from 'react-toastify';
+// Substitua pela importação simplificada
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -36,70 +37,59 @@ function App() {
 
     // 1. Lógica para persistência de Login
     useEffect(() => {
-        // Buscamos o usuário no Local Storage para persistência
-        const user = localStorage.getItem('loggedUser');
-        if (user) {
+        const storedUser = localStorage.getItem('loggedUser');
+        if (storedUser) {
             try {
-                setLoggedUser(JSON.parse(user));
+                // Tenta fazer o parse do JSON
+                const userObject = JSON.parse(storedUser);
+                setLoggedUser(userObject);
             } catch (e) {
-                // Limpa Local Storage se o JSON estiver corrompido
+                // Em caso de erro, limpa o localStorage e considera deslogado
+                console.error("Erro ao carregar usuário do localStorage:", e);
                 localStorage.removeItem('loggedUser');
-                console.error("Erro ao fazer parse do usuário salvo.");
             }
         }
-        // Finaliza o carregamento após tentar buscar o usuário
-        setIsLoading(false);
+        setIsLoading(false); // Termina o carregamento inicial
     }, []);
 
-    const getUserRole = () => loggedUser?.user?.role;
-    const getUserSectorIds = () => loggedUser?.user?.sectorIds || [];
+    // 2. Funções utilitárias para extrair dados do usuário (usadas nas Rotas)
+    // A ROLE está no objeto root 'loggedUser'
+    const getUserRole = () => loggedUser?.role;
+    // Os IDs também
+    const getUserSectorIds = () => loggedUser?.sectorIds || [];
 
-    // A função handleLogout não é mais estritamente necessária aqui, 
-    // mas a mantemos como utilitário se for usada em outro lugar.
-    // O DashboardCards agora usa setLoggedUser e a função logout do api.js
-    const handleLogout = () => {
-        localStorage.removeItem('loggedUser');
-        setLoggedUser(null);
-    };
-
-    // 2. CHECAGEM DE CARREGAMENTO GLOBAL 
+    // 3. Renderização Condicional
     if (isLoading) {
         return (
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                    <CircularProgress />
-                </div>
-            </ThemeProvider>
+            // Exibe um spinner de carregamento enquanto o estado de login está sendo verificado
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </div>
         );
     }
 
-    // 3. Renderização Principal (só ocorre após o carregamento)
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Router>
                 <Routes>
-                    {/* Rota de Login/Home (Redireciona se logado) */}
+                    {/* Rota inicial: Lida com Login/Logout e Exibe a Home */}
                     <Route
                         path="/"
-                        element={loggedUser ? <Navigate to="/dashboard" replace /> : <Home setLoggedUser={setLoggedUser} />}
+                        element={<Home loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
                     />
 
-                    {/* ROTAS PROTEGIDAS INDIVIDUAIS */}
+                    {/* Rota do Dashboard (Protegida) */}
                     <Route
                         path="/dashboard"
                         element={
                             <ProtectedRoute loggedUser={loggedUser}>
-                                {/* 🚨 INTEGRAÇÃO DO BOTÃO DE LOGOUT 🚨
-                                     Passamos setLoggedUser para que DashboardCards possa limpar o estado global. */}
-                                <DashboardCards
-                                    loggedUser={loggedUser}
-                                    setLoggedUser={setLoggedUser} // Propriedade necessária para o logout
-                                />
+                                <DashboardCards loggedUser={loggedUser} setLoggedUser={setLoggedUser} />
                             </ProtectedRoute>
                         }
                     />
+
+                    {/* Rotas de Gerenciamento (Protegidas) */}
                     <Route
                         path="/sectors"
                         element={
@@ -112,7 +102,8 @@ function App() {
                         path="/users"
                         element={
                             <ProtectedRoute loggedUser={loggedUser}>
-                                <UsuariosPage />
+                                {/* 🚨 ALTERAÇÃO AQUI: Passando a role para o UsuariosPage 🚨 */}
+                                <UsuariosPage userRole={getUserRole()} />
                             </ProtectedRoute>
                         }
                     />

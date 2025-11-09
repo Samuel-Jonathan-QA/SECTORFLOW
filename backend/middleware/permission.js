@@ -1,15 +1,24 @@
 // backend/middleware/permission.js
 
 const checkRole = (allowedRoles) => (req, res, next) => {
-    // 🚨 1. Verificar se o usuário está autenticado
+    
     if (!req.user || !req.user.role) {
-        // Isso não deve acontecer se o middleware 'auth' rodar primeiro, mas é um bom failsafe.
+        // Isso deve ser pego pelo 'protect' antes, mas é um bom failsafe
         return res.status(401).json({ error: 'Não autorizado. Faça login.' });
     }
+    
+    // Normaliza a role do usuário e as roles permitidas
+    const userRole = req.user.role.toUpperCase();
+    const normalizedAllowedRoles = allowedRoles.map(role => role.toUpperCase());
+    
+    // 🚨 DEBUG: Veja o que está sendo comparado 🚨
+    console.log('--- VERIFICAÇÃO DE PERMISSÃO ---');
+    console.log('Role do usuário (normalizada):', userRole); 
+    console.log('Roles permitidas (normalizadas):', normalizedAllowedRoles); 
+    console.log('---------------------------------');
 
-    // 🚨 2. Verificar se a role do usuário está na lista de roles permitidas
-    if (allowedRoles.includes(req.user.role)) {
-        // Se a role for permitida, continua para o Controller
+    // 2. Verificar se a role normalizada do usuário está na lista de roles permitidas
+    if (normalizedAllowedRoles.includes(userRole)) {
         next();
     } else {
         // Acesso negado por falta de permissão

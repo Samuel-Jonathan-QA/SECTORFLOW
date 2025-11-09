@@ -11,13 +11,14 @@ function DashboardCards({ loggedUser, setLoggedUser }) {
 
     // 🚨 Função de Logout 🚨
     const handleLogout = () => {
-        logout();             // Limpa o token e headers (do api.js)
-        setLoggedUser(null);  // Limpa o estado global do usuário logado
-        navigate('/');        // Redireciona para a página inicial (que deve mostrar o login)
+        logout();             // Limpa o token e headers (do api.js)
+        setLoggedUser(null);  // Limpa o estado global do usuário logado
+        navigate('/');        // Redireciona para a página inicial (que deve mostrar o login)
     };
 
-    // 🚨 1. EXTRAIR A ROLE DO USUÁRIO LOGADO 🚨
-    const userRole = loggedUser?.user?.role;
+    // 🚨 1. EXTRAIR A ROLE DO USUÁRIO LOGADO - CORRIGIDO 🚨
+    // A role está no nível principal do objeto loggedUser
+    const userRole = loggedUser?.role; // <--- CORREÇÃO AQUI
 
     const [sectors, setSectors] = useState([]);
     const [users, setUsers] = useState([]);
@@ -71,7 +72,7 @@ function DashboardCards({ loggedUser, setLoggedUser }) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                 {/* Boas-vindas */}
                 <Typography variant="h4" gutterBottom fontWeight="bold">
-                    Olá, {loggedUser?.user?.name || 'Usuário'}!
+                    Olá, {loggedUser?.name || 'Usuário'}! {/* Também ajustei a extração do nome por segurança */}
                 </Typography>
 
                 {/* 🚨 BOTÃO DE LOGOUT 🚨 */}

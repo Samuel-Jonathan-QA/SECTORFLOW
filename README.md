@@ -1,7 +1,7 @@
 <h1>SectorFlow | Sistema de Gestão Setorizada</h1>
 
 <p>
-  
+  
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
@@ -22,7 +22,7 @@ O foco principal é a <strong>segurança</strong> e a <strong>separação de res
 <ul>
   <li><strong>Fundação e Segurança (JWT, Bcrypt, Roles):</strong> ✅ Completa</li>
   <li><strong>CRUD Usuários:</strong> ✅ Completa (com autenticação e autorização por Role)</li>
-  <li><strong>CRUD Setores:</strong> ⚙️ Pendente</li>
+  <li><strong>CRUD Setores:</strong> ✅ Completa (com autenticação e autorização por Role)</li>
   <li><strong>CRUD Produtos:</strong> ⚙️ Pendente</li>
 </ul>
 <hr>
@@ -76,13 +76,13 @@ projeto/
 ├── backend/                  # API REST (Node.js/Express)
 │   ├── config/               # Configurações de DB e Associações
 │   ├── models/               # Esquemas do DB (Sequelize)
-│   ├── routes/               # Endpoints (auth.js, users.js, etc.)
+│   ├── routes/               # Endpoints (auth.js, users.js, sectors.js, etc.)
 │   ├── middleware/           # Middleware de Autenticação e Permissão
 │   └── server.js             # Ponto de inicialização
 └── frontend/                 # Aplicação Cliente (React)
     ├── src/
-    │   ├── components/       # Blocos de UI (UserLogin, Forms, Lists)
-    │   ├── pages/            # Telas (Dashboard, SetoresPage, etc.)
+    │   ├── components/       # Blocos de UI (UserLogin, Forms, Lists, ProtectedRoute)
+    │   ├── pages/            # Telas (Dashboard, SetoresPage, UsuariosPage, etc.)
     │   └── api.js            # Comunicação com o Backend (Axios)
 </pre>
 

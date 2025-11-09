@@ -1,81 +1,111 @@
+// frontend/src/pages/UsuariosPage.jsx (VERSÃO FINAL COM RESTRIÇÃO DE TELA)
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent } from '@mui/material'; 
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box } from '@mui/material'; 
 import UserForm from '../components/UserForm';
 import UserList from '../components/UserList';
 import API from '../api';
 import { toast } from 'react-toastify';
 
-function UsuariosPage() {
+// 🚨 NOVO: O componente agora deve receber a role 🚨
+function UsuariosPage({ userRole }) { 
     const [users, setUsers] = useState([]);
     const [sectors, setSectors] = useState([]);
     
-    // 🚨 NOVOS ESTADOS PARA A MODAL DE EDIÇÃO 🚨
+    // Estados para a Modal de Edição
     const [openModal, setOpenModal] = useState(false);
-    const [editingUser, setEditingUser] = useState(null); // Armazena o usuário selecionado para edição
+    const [editingUser, setEditingUser] = useState(null); 
+
+    // 🚨 1. LÓGICA CRÍTICA DE PERMISSÃO 🚨
+    const canManageUsers = userRole === 'ADMIN';
 
     // Refatora a busca para incluir tratamento de erro e usar useCallback
     const fetchUsers = useCallback(async () => {
+        // Se não for ADMIN, não faz a chamada (o backend bloquearia, mas evitamos o erro)
+        if (!canManageUsers) {
+            setUsers([]); // Garante que a lista está vazia
+            return;
+        }
+        
         try {
             const res = await API.get('/users');
             setUsers(res.data);
         } catch (error) {
             console.error('Erro ao buscar usuários:', error);
-            // Melhor feedback ao usuário
-            toast.error('Não foi possível carregar a lista de usuários.'); 
+            toast.error('Não foi possível carregar a lista de usuários. Permissão negada.'); 
         }
-    }, []); // Dependências vazias, só é criada uma vez
+    }, [canManageUsers]); // Depende de canManageUsers
 
     const fetchSectors = useCallback(async () => {
         try {
-            const res = await API.get('/sectors');
+            // A busca de setores é feita para popular o formulário, mas é a rota /sectors
+            // (que corrigimos para exigir autenticação, mas não restrição de role no GET)
+            const res = await API.get('/sectors'); 
             setSectors(res.data);
         } catch (error) {
             console.error('Erro ao buscar setores:', error);
-            toast.error('Não foi possível carregar a lista de setores.');
+            // Isso pode ocorrer se o token expirar, por exemplo
+            toast.error('Não foi possível carregar a lista de setores para formulário.');
         }
-    }, []); // Dependências vazias
+    }, []);
 
-    // Executa as buscas ao montar o componente
     useEffect(() => {
         fetchUsers();
-        fetchSectors();
-    }, [fetchUsers, fetchSectors]); // Dependências de useCallback
+        // A busca de setores deve ocorrer sempre que a página carregar
+        fetchSectors(); 
+    }, [fetchUsers, fetchSectors]);
 
-    // 🚨 LÓGICA DE EDIÇÃO 🚨
+    // Lógica da Modal
     const handleEditClick = (user) => {
-        setEditingUser(user); // Define o usuário para preencher o formulário
-        setOpenModal(true);   // Abre a modal
+        setEditingUser(user);
+        setOpenModal(true);
     };
-    
+
     const handleCloseModal = () => {
         setOpenModal(false);
         setEditingUser(null);
-        fetchUsers(); // Recarrega a lista após fechar (seja após edição ou cancelamento)
+        fetchUsers(); // Recarrega a lista após fechar (seja por criação ou edição)
     };
-
+    
+    // Lógica de Deleção
     const handleDeleteUser = async (id) => {
         try {
             await API.delete(`/users/${id}`);
-            setUsers(users.filter(u => u.id !== id));
+            fetchUsers();
             toast.success('Usuário deletado com sucesso!');
-        } catch (error) { // Adiciona tratamento de erro detalhado
-            console.error('Erro ao deletar usuário:', error);
-            toast.error('Erro ao deletar usuário.');
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Erro ao deletar usuário. Permissão insuficiente.');
         }
     };
-
-   return (
-        <Container maxWidth="lg" style={{ marginTop: '30px' }}> {/* 🚨 MAX-WIDTH AUMENTADA PARA CABER AS COLUNAS 🚨 */}
+    
+    // ----------------------------------------------------
+    // 🚨 2. RENDERIZAÇÃO CONDICIONAL DA TELA 🚨
+    // ----------------------------------------------------
+    if (!canManageUsers) {
+        return (
+            <Container maxWidth="md" style={{ marginTop: '50px', textAlign: 'center' }}>
+                <Typography variant="h4" color="error" gutterBottom>
+                    Acesso Negado
+                </Typography>
+                <Typography variant="h6">
+                    Você não tem permissão de administrador para gerenciar usuários.
+                </Typography>
+            </Container>
+        );
+    }
+    
+    // Se for ADMIN, renderiza a tela de Gerenciamento completa
+    return (
+        <Container maxWidth="lg" style={{ marginTop: '30px' }}>
             <Typography variant="h4" gutterBottom>
                 Gerenciamento de Usuários
             </Typography>
 
-            <Grid container spacing={2}> {/* Aumentei o espaçamento para 4 */}
-                
-                {/* 🚨 COLUNA ESQUERDA: Formulário de Criação 🚨 */}
-                <Grid item xs={12} md={6}> 
+            <Grid container spacing={3}>
+                {/* COLUNA ESQUERDA: Criação de Novo Usuário (APENAS ADMIN) */}
+                <Grid item xs={12} md={6}>
                     <Typography variant="h5" gutterBottom>
-                        Novo Usuário
+                        Criar Novo Usuário
                     </Typography>
                     <UserForm 
                         sectors={sectors} 
@@ -84,7 +114,7 @@ function UsuariosPage() {
                     />
                 </Grid>
 
-                {/* 🚨 COLUNA DIREITA: Lista de Usuários 🚨 */}
+                {/* COLUNA DIREITA: Lista de Usuários (APENAS ADMIN) */}
                 <Grid item xs={12} md={6}>
                     <Typography variant="h5" gutterBottom>
                         Lista de Usuários
@@ -97,15 +127,16 @@ function UsuariosPage() {
                 </Grid>
             </Grid>
 
-            {/* 🚨 MODAL DE EDIÇÃO 🚨 */}
+            {/* MODAL DE EDIÇÃO (APENAS ADMIN) */}
             <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
-                <DialogTitle>{editingUser ? 'Editar Usuário' : 'Criar Usuário'}</DialogTitle>
+                <DialogTitle>
+                    {editingUser ? 'Editar Usuário' : 'Criar Usuário'}
+                </DialogTitle>
                 <DialogContent>
                     <UserForm 
                         sectors={sectors} 
-                        // Passa o usuário para edição (será null para criação)
                         currentUser={editingUser} 
-                        onFinish={handleCloseModal} // Fecha e recarrega após edição
+                        onFinish={handleCloseModal}
                     />
                 </DialogContent>
             </Dialog>

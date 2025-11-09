@@ -14,14 +14,14 @@ const getAllProducts = async (req, res) => {
         // 🚨 Lógica de Filtro para VENDEDOR 🚨
         if (role === 'VENDEDOR') {
             // O vendedor só pode ver produtos em seus setores permitidos
-            if (sectorIds && sectorIds.length > 0) {
-                whereCondition.sectorId = {
-                    [Op.in]: sectorIds // Usa o operador IN para incluir todos os IDs permitidos
-                };
-            } else {
-                // Se for VENDEDOR, mas não tiver setores, não mostra nada
-                whereCondition.sectorId = null;
+            if (!sectorIds || sectorIds.length === 0) {
+                // Se for VENDEDOR e não tiver setores, retorna um array vazio imediatamente
+                return res.status(200).json([]);
             }
+            
+            whereCondition.sectorId = {
+                [Op.in]: sectorIds // Usa o operador IN para incluir todos os IDs permitidos
+            };
         }
         // Se for ADMIN ou USER, a whereCondition fica vazia e mostra todos.
 
@@ -72,7 +72,7 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { role, sectorIds } = req.user;
-    const updateData = req.body;
+    let updateData = req.body; // Alterado para 'let' para permitir a remoção de sectorId
 
     try {
         const product = await Product.findByPk(id);
@@ -91,11 +91,15 @@ const updateProduct = async (req, res) => {
             if (updateData.sectorId && updateData.sectorId !== product.sectorId) {
                 return res.status(403).json({ error: 'Acesso negado. Vendedores não podem mudar o setor de um produto.' });
             }
+            
+            // 💡 Melhoria: Se o VENDEDOR enviou sectorId (e não deu 403), removemos para garantir que não será aplicado.
+            if (updateData.sectorId) {
+                delete updateData.sectorId; 
+            }
         }
         // O ADMIN pode fazer qualquer alteração.
 
         const [updatedRows] = await Product.update(updateData, { where: { id } });
-        // ... continua o código de retorno ...
         
         const updatedProduct = await Product.findByPk(id, {
             include: [{ model: Sector, as: 'Sector', attributes: ['id', 'name'] }]

@@ -1,3 +1,4 @@
+//frontend\src\components\ProductForm.js
 import React, { useState } from 'react';
 import { TextField, Button, MenuItem, Paper } from '@mui/material';
 import API from '../api';

@@ -5,7 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 // 🚨 NOVO: Recebe as props de permissão 🚨
 function ProductList({ products, onDelete, userRole, userSectorIds }) {
-    
+
     // Função helper para verificar se o usuário pode gerenciar o produto
     const canManageProduct = (product) => {
         // Se for ADMIN, sempre pode
@@ -31,10 +31,10 @@ function ProductList({ products, onDelete, userRole, userSectorIds }) {
             <div style={{ height: '150px', overflowY: 'auto' }}>
                 <List>
                     {products.map(product => {
-                        
+
                         // 🚨 1. CALCULA A PERMISSÃO PARA ESTE ITEM 🚨
                         const canDelete = canManageProduct(product);
-                        
+
                         return (
                             <ListItem
                                 key={product.id}

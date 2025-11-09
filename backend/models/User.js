@@ -1,11 +1,12 @@
 // backend/models/User.js (COMPLETO E CORRIGIDO)
 
-const sequelize = require('../config/database');
+// 🚨 CORREÇÃO: Desestrutura a instância 'sequelize' do objeto exportado 🚨
+const { sequelize } = require('../config/database');
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
-// 🚨 REMOVA A IMPORTAÇÃO DE SECTOR DAQUI 🚨
-// const Sector = require('./Sector'); // <-- REMOVA ESTA LINHA
+// Não precisa da importação de Sector aqui.
+// const Sector = require('./Sector'); // <-- CORRETO: REMOVIDA
 
 const User = sequelize.define('User', {
     name: { type: DataTypes.STRING, allowNull: false },
@@ -14,7 +15,6 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: false,
         // Adicionamos aqui para garantir que a senha não saia em chamadas padrão
-        // mas ainda possa ser buscada pelo AuthController
         get() {
             return this.getDataValue('password');
         }
@@ -53,5 +53,11 @@ const User = sequelize.define('User', {
     }
 });
 
-// 🚨 FALHA 2 CORRIGIDA: EXPORTAÇÃO 🚨
+// Método de instância para comparar senhas (útil no AuthController)
+User.prototype.matchPassword = async function(enteredPassword) {
+    // Compara a senha informada com a senha hasheada no banco de dados
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+
 module.exports = User;

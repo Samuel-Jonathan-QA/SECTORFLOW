@@ -1,7 +1,8 @@
-// backend/models/Product.js (AJUSTADO)
+// backend/models/Product.js (AJUSTADO E CORRIGIDO)
 
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+// 🚨 CORREÇÃO: Desestrutura a instância 'sequelize' 🚨
+const { sequelize } = require('../config/database'); 
 const Sector = require('./Sector'); // Importa o Sector
 
 const Product = sequelize.define('Product', {
@@ -14,7 +15,7 @@ const Product = sequelize.define('Product', {
         type: DataTypes.STRING, 
         allowNull: false 
     },
-    // 🚨 AJUSTE 1: Usar DECIMAL para precisão monetária (opcional, mas recomendado) 🚨
+    // 🚨 AJUSTE 1: Usar DECIMAL para precisão monetária
     price: { 
         type: DataTypes.DECIMAL(10, 2), 
         allowNull: false 
@@ -28,7 +29,6 @@ const Product = sequelize.define('Product', {
             key: 'id'
         } 
     },
-    // Adicionei description para corresponder à Migration que sugeri
     description: { 
         type: DataTypes.TEXT, 
         allowNull: true 
@@ -38,13 +38,13 @@ const Product = sequelize.define('Product', {
 // Associação: Um Produto pertence a um Setor
 Product.belongsTo(Sector, { 
     foreignKey: 'sectorId',
-    as: 'Sector' // Adicionando um alias para facilitar os 'includes'
+    as: 'Sector' // Alias para facilitar os 'includes'
 });
 
 // 🚨 AJUSTE 3: Asssociação reversa 🚨
 Sector.hasMany(Product, { 
     foreignKey: 'sectorId', 
-    as: 'Products' // Adicionando um alias para consistência
+    as: 'Products' // Alias para consistência
 });
 
 module.exports = Product;

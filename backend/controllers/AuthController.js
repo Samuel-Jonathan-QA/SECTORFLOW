@@ -1,7 +1,7 @@
-// backend/controllers/AuthController.js (CORRIGIDO PARA USAR SCOPE)
+// backend/controllers/AuthController.js (FINALIZADO)
 
-const User = require('../models/User');
-const Sector = require('../models/Sector');
+const User = require('../models/User'); // Importa o modelo User (já corrigido internamente)
+const Sector = require('../models/Sector'); // Importa o modelo Sector (já corrigido internamente)
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
@@ -14,7 +14,7 @@ const generateToken = (id) => {
     });
 };
 
-// EXPORTAÇÃO CORRETA do login
+// EXPORTAÇÃO CORRETA do login (usa exports.login para funcionar com authController.login)
 exports.login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -25,13 +25,10 @@ exports.login = async (req, res) => {
 
     try {
         // 2. Encontrar o usuário e buscar seus setores
-        // 🚨 CORREÇÃO APLICADA AQUI: Usando o scope('withPassword') 🚨
+        // 🚨 USANDO O SCOPE: Garante que a senha venha no resultado 🚨
         const user = await User.scope('withPassword').findOne({
             where: { email },
-            // A linha attributes: { include: ['password'] } FOI REMOVIDA,
-            // pois o scope('withPassword') faz o mesmo trabalho de forma mais limpa.
-
-            // Inclui os setores associados
+            // Inclui os setores associados (N:N)
             include: [{ model: Sector, as: 'Sectors', attributes: ['id'] }]
         });
 
@@ -40,9 +37,10 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciais inválidas.' });
         }
 
-        // 3. Comparar a senha
-        // O user.password agora deve conter o hash Bcrypt completo
+        // 3. Comparar a senha (usando bcrypt, pois o hash está em user.password)
         const isMatch = await bcrypt.compare(password, user.password);
+        // OU, se você tivesse adicionado o método no modelo: 
+        // const isMatch = await user.matchPassword(password);
 
         if (!isMatch) {
             // Senha incorreta
@@ -52,14 +50,13 @@ exports.login = async (req, res) => {
         // 4. Sucesso: Gera o Token JWT e monta o objeto do usuário
         const token = generateToken(user.id);
 
-        // Cria uma versão do usuário sem a senha (que seria incluída pelo scope)
-        // A Sequelize normalmente já omite, mas garantimos a limpeza
+        // Monta o objeto de resposta, excluindo a senha
         const userToReturn = {
             id: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
-            // Mapeia os IDs dos setores (garante que não quebra se não houver)
+            // Mapeia os IDs dos setores
             sectorIds: user.Sectors ? user.Sectors.map(s => s.id) : []
         };
 
@@ -69,7 +66,6 @@ exports.login = async (req, res) => {
         });
 
     } catch (error) {
-        // O erro 'User.findOne is not a function' será pego aqui
         console.error('Erro no login:', error.message);
         res.status(500).json({ error: 'Erro interno do servidor.' });
     }

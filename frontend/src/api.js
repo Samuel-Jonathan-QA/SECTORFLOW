@@ -1,41 +1,49 @@
-// frontend/src/api.js (CÓDIGO CORRIGIDO)
+// frontend/src/api.js
 
 import axios from 'axios';
 
-// Renomeado para 'api' (minúsculo) para convenção e para corrigir a referência no logout.
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api', // compatível com backend
+    // 🚨 Certifique-se de que a porta do backend está correta (3001) 🚨
+    baseURL: 'http://localhost:3001/api', 
 });
 
-// Interceptor de Requisição
+// Interceptor de Requisição para anexar o Token JWT
 api.interceptors.request.use((config) => {
-  // 1. Busca o token diretamente da chave 'token' no Local Storage
-  const token = localStorage.getItem('token');
+    // 1. Busca o valor da chave 'loggedUser' no Local Storage
+    const loggedUserJSON = localStorage.getItem('loggedUser');
+    
+    let token = null;
 
-  // 2. Se o token existir, anexa ao cabeçalho Authorization
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+    if (loggedUserJSON) {
+        try {
+            // 2. Tenta parsear o JSON para obter o objeto
+            const loggedUser = JSON.parse(loggedUserJSON);
+            
+            // 3. Extrai o token do objeto
+            token = loggedUser ? loggedUser.token : null; 
+        } catch (e) {
+            console.error("Erro ao parsear 'loggedUser' do Local Storage:", e);
+            // Se o JSON estiver corrompido, o token permanece null
+        }
+    }
 
-  return config;
+    // 4. Se o token existir, anexa ao cabeçalho Authorization
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
 }, (error) => {
-  return Promise.reject(error);
+    return Promise.reject(error);
 });
 
 // Exporta a função de logout
 export const logout = () => {
-  // Remove o token de autenticação do Local Storage (Chave: 'token')
-  localStorage.removeItem('token');
+    // Remove o objeto completo do usuário
+    localStorage.removeItem('loggedUser');
 
-  // Remove o objeto do usuário (Chave: 'user')
-  localStorage.removeItem('user');
-
-  // 🚨 CORREÇÃO 1: Usa a instância correta 'api' 🚨
-  // Limpa o cabeçalho 'Authorization' da instância Axios.
-  api.defaults.headers.common['Authorization'] = null;
-
-  console.log("Usuário deslogado. Token removido.");
+    // Limpa o header padrão (importante se você não recarregar a página)
+    delete api.defaults.headers.common['Authorization'];
 };
 
-// Exporta a instância Axios
 export default api;
