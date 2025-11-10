@@ -64,7 +64,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                      SectorFlow
                 </Typography>
                 <Typography variant="caption" color={textColor}>
-                    Gestão Completa
+                    Gestão Setorizada
                 </Typography>
             </Box>
 
