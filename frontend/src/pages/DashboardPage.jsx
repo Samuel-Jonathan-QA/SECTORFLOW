@@ -1,4 +1,4 @@
-// frontend/src/pages/DashboardPage.js (CONTEÚDO PURO)
+// frontend/src/pages/DashboardPage.js (CONTEÚDO FINALMENTE CORRIGIDO)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
@@ -6,7 +6,7 @@ import {
     List, ListItem, ListItemText 
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import API from '../api'; // API.js - Não precisa importar 'logout' aqui
+import API from '../api'; 
 
 // Ícones para o Dashboard (Cards)
 import InventoryIcon from '@mui/icons-material/Inventory'; 
@@ -19,7 +19,6 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer'; 
 
 
-// O componente agora SÓ precisa do loggedUser e não se preocupa mais com setLoggedUser ou Logout
 function DashboardPage({ loggedUser }) {
     const navigate = useNavigate();
     const [sectors, setSectors] = useState([]);
@@ -134,15 +133,20 @@ function DashboardPage({ loggedUser }) {
     // Componente de um Único Card
     // ----------------------------------------------------
     const MetricCard = ({ card }) => {
-        const renderCount = () => (
-            <Typography 
-                variant="h3" 
-                fontWeight="bold" 
-                sx={{ fontSize: '2.5rem', mt: 1.5, color: '#212121' }}
-            >
-                {card.count}
-            </Typography>
-        );
+        const renderCount = () => {
+            // Ajuste de Tamanho: Menor para valor de moeda, maior para contagem
+            const fontSize = card.isCurrency ? '1.5rem' : '1.5rem';
+            
+            return (
+                <Typography 
+                    variant="h3" 
+                    fontWeight="bold" 
+                    sx={{ fontSize: fontSize, mt: 1.5, color: '#212121' }} 
+                >
+                    {card.count}
+                </Typography>
+            );
+        };
         
         const hoverShadow = `0 5px 15px ${card.color}40`;
 
@@ -156,6 +160,9 @@ function DashboardPage({ loggedUser }) {
                     cursor: 'pointer',
                     border: '1px solid #f0f0f0',
                     transition: 'all 0.2s ease-in-out',
+                    // 🚨 Adicionado: Define o Paper como o ponto de referência 🚨
+                    position: 'relative', 
+                    overflow: 'hidden', // Esconde qualquer parte do ícone que passe da borda
                     '&:hover': {
                         transform: 'translateY(-2px)',
                         boxShadow: hoverShadow,
@@ -163,22 +170,33 @@ function DashboardPage({ loggedUser }) {
                     },
                 }}
             >
-                <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                    <Box textAlign="left">
-                        <Typography variant="body2" color="textSecondary" fontWeight="medium">
-                            {card.label}
-                        </Typography>
-                        {renderCount()}
-                    </Box>
-                    <Box sx={{
-                        width: 80, height: 80, borderRadius: '50%', backgroundColor: card.iconBg,
-                        position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        '&::before': { content: '""', position: 'absolute', width: '120%', height: '120%', 
-                                        borderRadius: '50%', opacity: 0.5, backgroundColor: card.iconBg, zIndex: 0,
-                        }
-                    }}>
-                        <card.icon sx={{ fontSize: 30, color: card.color, zIndex: 1 }} />
-                    </Box>
+                {/* 🚨 CONTEÚDO DE TEXTO E VALOR (Agora Vertical) 🚨 */}
+                <Box textAlign="left" sx={{ zIndex: 2 }}> 
+                    <Typography variant="body2" color="textSecondary" fontWeight="medium">
+                        {card.label}
+                    </Typography>
+                    {renderCount()}
+                </Box>
+                
+                {/* 🚨 ÍCONE POSICIONADO ABSOLUTAMENTE NO CANTO 🚨 */}
+                <Box sx={{
+                    width: 80, height: 80, 
+                    borderRadius: '50%', 
+                    backgroundColor: card.iconBg,
+                    // 🚨 POSICIONAMENTO ABSOLUTO PARA MOVER PARA O CANTO 🚨
+                    position: 'absolute', 
+                    top: -15,   // Sobe o ícone 
+                    right: -15, // Move para a direita (ajuste esse valor se precisar de mais ou menos margem)
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    zIndex: 1, // Ícone deve ficar abaixo do texto do card (ou igual)
+                    
+                    '&::before': { content: '""', position: 'absolute', width: '120%', height: '120%', 
+                        borderRadius: '50%', opacity: 0.5, backgroundColor: card.iconBg, zIndex: 0,
+                    }
+                }}>
+                    <card.icon sx={{ fontSize: 30, color: card.color, zIndex: 2 }} />
                 </Box>
             </Paper>
         );
@@ -186,7 +204,7 @@ function DashboardPage({ loggedUser }) {
 
 
     // ----------------------------------------------------
-    // Componentes de Lista
+    // Componentes de Lista (NÃO ALTERADOS)
     // ----------------------------------------------------
     const ProductListItem = ({ product }) => (
         <ListItem sx={{ px: 0 }}>
@@ -219,7 +237,7 @@ function DashboardPage({ loggedUser }) {
 
 
     // ----------------------------------------------------
-    // RENDERIZAÇÃO PRINCIPAL (SÓ O CONTEÚDO)
+    // RENDERIZAÇÃO PRINCIPAL (NÃO ALTERADA)
     // ----------------------------------------------------
     return (
         <>
