@@ -1,30 +1,31 @@
-// frontend/src/pages/ProdutosPage.jsx (Padronizado com Modal de Edição e Botão Voltar)
+// frontend/src/pages/ProdutosPage.jsx (Padronizado com o NOVO LAYOUT)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button } from '@mui/material'; 
+// ✅ IMPORTANDO PAPER E DIVIDER
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button, Paper, Divider } from '@mui/material';
 import ProductForm from '../components/ProductForm';
 import ProductList from '../components/ProductList';
 import API from '../api';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 
 // Recebe as props userRole e userSectorIds
 function ProdutosPage({ userRole, userSectorIds }) {
     const [products, setProducts] = useState([]);
     const [allSectors, setAllSectors] = useState([]);
-    
+
     // Estados para a Modal de Edição
     const [openModal, setOpenModal] = useState(false);
-    const [editingProduct, setEditingProduct] = useState(null); 
-    
-    // 🚨 HOOK DE NAVEGAÇÃO 🚨
+    const [editingProduct, setEditingProduct] = useState(null);
+
+    // HOOK DE NAVEGAÇÃO 
     const navigate = useNavigate();
 
     // Lógica de permissão (robusta)
     const userRoleUpperCase = userRole ? userRole.toUpperCase() : '';
     const canManageProducts = userRoleUpperCase === 'ADMIN' || userRoleUpperCase === 'VENDEDOR';
     const isSeller = userRoleUpperCase === 'VENDEDOR';
-    
+
     // Define a lista de setores que o usuário PODE usar no formulário
     const allowedSectors = isSeller
         ? allSectors.filter(sector => userSectorIds && userSectorIds.includes(sector.id))
@@ -51,7 +52,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
     // Refatora a busca de setores para usar useCallback
     const fetchAllSectors = useCallback(async () => {
         try {
-            const res = await API.get('/sectors'); 
+            const res = await API.get('/sectors');
             setAllSectors(res.data);
         } catch (error) {
             console.error('Erro ao buscar setores:', error);
@@ -61,7 +62,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
 
     useEffect(() => {
         fetchProducts();
-        fetchAllSectors(); 
+        fetchAllSectors();
     }, [fetchProducts, fetchAllSectors]);
 
     // Lógica da Modal
@@ -78,6 +79,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
 
     // Lógica de Deleção
     const handleDeleteProduct = async (id) => {
+        if (!window.confirm('Tem certeza que deseja deletar este produto?')) return;
         try {
             await API.delete(`/products/${id}`);
             fetchProducts();
@@ -99,73 +101,77 @@ function ProdutosPage({ userRole, userSectorIds }) {
                 <Typography variant="h6">
                     Você não tem permissão para gerenciar produtos.
                 </Typography>
+                <Button variant="outlined" sx={{ mt: 2 }} onClick={() => navigate('/dashboard')}>
+                    Voltar para o Dashboard
+                </Button>
             </Container>
         );
     }
 
     // Se for ADMIN ou VENDEDOR, renderiza a tela de Gerenciamento completa
     return (
-        <Container maxWidth="lg" style={{ marginTop: '30px' }}>
-            {/* 🚨 CORREÇÃO: TÍTULO SEM O BOTÃO VOLTAR AO LADO 🚨 */}
-            <Typography variant="h4" gutterBottom>
-                Gerenciamento de Produtos
-            </Typography>
-            {/* FIM DA CORREÇÃO */}
+        // ✅ 1. APLICANDO O FUNDO CINZA CLARO NA RAIZ
+        <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', width: '100%' }}>
+            {/* ✅ 2. AJUSTANDO PADDING DO CONTAINER */}
+            <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
 
-            <Grid container spacing={3}>
-                {/* COLUNA ESQUERDA: Criação de Novo Produto */}
-                <Grid item xs={12} md={6}>
-                    <Typography variant="h5" gutterBottom>
-                        Criar Novo Produto
+                {/* ✅ 3. CABEÇALHO UNIFICADO (Título h3 forte + Botão Voltar) */}
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
+                        Gerenciamento de Produtos
                     </Typography>
-                    <ProductForm 
-                        sectors={allowedSectors} // Lista filtrada/completa
-                        onFinish={handleCloseModal}
-                        // Não passamos currentProduct, então este ProductForm é para CRIAÇÃO
-                    />
-                </Grid>
-
-                {/* COLUNA DIREITA: Lista de Produtos */}
-                <Grid item xs={12} md={6}>
-                    <Typography variant="h5" gutterBottom>
-                        Lista de Produtos
-                    </Typography>
-                    <ProductList 
-                        products={products} 
-                        onDelete={handleDeleteProduct}
-                        onEdit={handleEditClick} // Passa o clique para abrir a modal de edição
-                        userRole={userRole}
-                        userSectorIds={userSectorIds}
-                    />
                     
-                    {/* 🚨 NOVO: Alinhamento do botão 'Voltar' ABAIXO da lista 🚨 */}
-                    <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
-                        <Button 
-                            variant="outlined" 
-                            color="secondary" 
-                            onClick={() => navigate('/dashboard')} // Navega para o Dashboard
-                        >
-                            Voltar
-                        </Button>
-                    </Box>
-                    {/* FIM DA CORREÇÃO */}
-                </Grid>
-            </Grid>
+                </Box>
 
-            {/* MODAL DE EDIÇÃO */}
-            <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
-                <DialogTitle>
-                    {editingProduct ? 'Editar Produto' : 'Criar Produto'}
-                </DialogTitle>
-                <DialogContent>
-                    <ProductForm 
-                        sectors={allowedSectors}
-                        currentProduct={editingProduct} 
-                        onFinish={handleCloseModal}
-                    />
-                </DialogContent>
-            </Dialog>
-        </Container>
+                {/* ✅ 3. SEPARADOR */}
+                <Divider sx={{ mb: 4 }} />
+
+                <Grid container spacing={3}>
+                    {/* COLUNA ESQUERDA: Criação de Novo Produto */}
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="h5" gutterBottom fontWeight="medium">
+                            Criar Novo Produto
+                        </Typography>
+                        {/* ✅ 4. APLICANDO O PAPER (BRANCO, SEM ELEVATION, COM BORDA SUTIL) */}
+                        <ProductForm
+                            sectors={allowedSectors} // Lista filtrada/completa
+                            onFinish={handleCloseModal}
+                        // Não passamos currentProduct, então este ProductForm é para CRIAÇÃO
+                        />
+                    </Grid>
+
+                    {/* COLUNA DIREITA: Lista de Produtos */}
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="h5" gutterBottom fontWeight="medium">
+                            Lista de Produtos
+                        </Typography>
+                        {/* ✅ 4. APLICANDO O PAPER (BRANCO, SEM ELEVATION, COM BORDA SUTIL) */}
+                        <ProductList
+                            products={products}
+                            onDelete={handleDeleteProduct}
+                            onEdit={handleEditClick} // Passa o clique para abrir a modal de edição
+                            userRole={userRole}
+                            userSectorIds={userSectorIds}
+                        />
+                       
+                    </Grid>
+                </Grid>
+
+                {/* MODAL DE EDIÇÃO */}
+                <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+                    <DialogTitle>
+                        {editingProduct ? 'Editar Produto' : 'Criar Produto'}
+                    </DialogTitle>
+                    <DialogContent>
+                        <ProductForm
+                            sectors={allowedSectors}
+                            currentProduct={editingProduct}
+                            onFinish={handleCloseModal}
+                        />
+                    </DialogContent>
+                </Dialog>
+            </Container>
+        </Box>
     );
 }
 

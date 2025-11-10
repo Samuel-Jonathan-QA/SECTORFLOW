@@ -20,6 +20,12 @@ const Product = sequelize.define('Product', {
         type: DataTypes.DECIMAL(10, 2), 
         allowNull: false 
     },
+    // 💡 NOVO CAMPO: Quantidade em estoque 💡
+    quantity: { 
+        type: DataTypes.INTEGER, 
+        allowNull: false,
+        defaultValue: 0 
+    },
     sectorId: { 
         type: DataTypes.INTEGER, 
         allowNull: false,

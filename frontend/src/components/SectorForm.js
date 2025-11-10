@@ -67,7 +67,7 @@ function SectorForm({ onFinish, currentSector }) {
     const submitButtonText = currentSector ? 'Atualizar Setor' : 'Adicionar Setor';
 
     return (
-        <Paper elevation={3} style={{ padding: '20px' }} data-testid="sector-form">
+        <Paper elevation={3} style={{ padding: '10px' }} data-testid="sector-form">
             <form onSubmit={handleSubmit}>
                 <TextField 
                     label="Nome do Setor" 

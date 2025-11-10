@@ -123,7 +123,7 @@ function UserForm({ sectors, currentUser, onFinish }) {
     const passwordRequired = !currentUser;
 
     return (
-        <Paper elevation={3} style={{ padding: '20px' }} data-testid="user-form">
+        <Paper elevation={3} style={{ padding: '10px' }} data-testid="user-form">
             <form onSubmit={handleSubmit}>
                 {/* Campos de Nome e Email (Mantidos) */}
                 <TextField label="Nome" value={name} onChange={(e) => setName(e.target.value)} required fullWidth margin="normal" />

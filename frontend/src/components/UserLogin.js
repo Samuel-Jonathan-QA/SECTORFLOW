@@ -41,7 +41,7 @@ function UserLogin({ setLoggedUser }) {
   };
 
   return (
-    <Paper elevation={3} style={{ padding: '20px', maxWidth: '400px', margin: '0 auto' }} data-testid="user-login">
+    <Paper elevation={3} style={{ padding: '10px', maxWidth: '400px', margin: '0 auto' }} data-testid="user-login">
       <Typography variant="h5" gutterBottom>Entrar no SectorFlow</Typography>
 
       {/* Campo de Email */}
@@ -72,7 +72,7 @@ function UserLogin({ setLoggedUser }) {
         sx={{
           mt: 2, // margin top
           backgroundColor: 'rgba(24, 123, 189, 1)',
-          color: '#fff',
+          color: '#ffffffff',
           '&:hover': {
             backgroundColor: 'rgba(3, 62, 102, 1)',
           },

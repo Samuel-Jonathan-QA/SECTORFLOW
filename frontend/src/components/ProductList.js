@@ -1,6 +1,8 @@
-// frontend/src/components/ProductList.js (Refatorado no padrão UserList)
+// frontend/src/components/ProductList.js (Refatorado com Divisor)
 
-import { List, ListItem, ListItemText, Typography, Paper, IconButton, Box } from '@mui/material';
+// ✅ Importa Divider e React
+import React from 'react';
+import { List, ListItem, ListItemText, Typography, Paper, IconButton, Box, Divider } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit'; // Novo ícone de edição
 
@@ -26,61 +28,63 @@ function ProductList({ products, onDelete, onEdit, userRole, userSectorIds }) {
     };
 
     return (
-        <Paper elevation={3} style={{ padding: '20px' }}>
-            {/* Título fixo */}
-            <Typography variant="h6" style={{ marginBottom: '10px' }}>Produtos</Typography>
-
-            {/* Lista rolável */}
+        <Paper elevation={3} style={{ padding: '10px' }}>
             <div style={{ height: '350px', overflowY: 'auto' }}>
                 <List>
-                    {products.map(product => {
+                    {/* Adicionamos 'index' ao map para controlar o Divider */}
+                    {products.map((product, index) => {
 
                         // Calcula a permissão para este item
                         const canModify = canManageProduct(product);
 
                         return (
-                            <ListItem
-                                key={product.id}
-                                secondaryAction={
-                                    // RENDERIZA CONDICIONALMENTE OS BOTÕES AGRUPADOS
-                                    canModify && (
-                                        <Box> 
-                                            {/* BOTÃO DE EDIÇÃO */}
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="edit"
-                                                // Chama onEdit e passa o objeto 'product' completo
-                                                onClick={() => onEdit(product)} 
-                                                sx={{
-                                                    color: '#1e88e5', 
-                                                    '&:hover': { color: '#0d47a1' },
-                                                    marginRight: 1 
-                                                }}
-                                            >
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
+                            // Usamos React.Fragment para agrupar o item e o divisor
+                            <React.Fragment key={product.id}>
+                                <ListItem
+                                    secondaryAction={
+                                        // RENDERIZA CONDICIONALMENTE OS BOTÕES AGRUPADOS
+                                        canModify && (
+                                            <Box>
+                                                {/* BOTÃO DE EDIÇÃO */}
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="edit"
+                                                    // Chama onEdit e passa o objeto 'product' completo
+                                                    onClick={() => onEdit(product)}
+                                                    sx={{
+                                                        color: '#1e88e5',
+                                                        '&:hover': { color: '#0d47a1' },
+                                                        marginRight: 1
+                                                    }}
+                                                >
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
 
-                                            {/* BOTÃO DE DELETAR */}
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="delete"
-                                                onClick={() => onDelete(product.id)}
-                                                sx={{
-                                                    color: '#f44336ff',
-                                                    '&:hover': { color: '#c62828' }
-                                                }}
-                                            >
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                    )
-                                }
-                            >
-                                <ListItemText
-                                    primary={`${product.name} - R$ ${product.price}`}
-                                    secondary={`Setor: ${product.Sector?.name || 'Sem setor'}`}
-                                />
-                            </ListItem>
+                                                {/* BOTÃO DE DELETAR */}
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    onClick={() => onDelete(product.id)}
+                                                    sx={{
+                                                        color: '#f44336ff',
+                                                        '&:hover': { color: '#c62828' }
+                                                    }}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Box>
+                                        )
+                                    }
+                                >
+                                    <ListItemText
+                                        primary={`${product.name} - R$ ${product.price}`}
+                                        secondary={`Setor: ${product.Sector?.name || 'Sem setor'}`}
+                                    />
+                                </ListItem>
+
+                                {/* Adiciona o Divider se não for o último item */}
+                                {index < products.length - 1 && <Divider component="li" />}
+                            </React.Fragment>
                         );
                     })}
                 </List>
