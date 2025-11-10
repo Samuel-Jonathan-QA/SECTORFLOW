@@ -17,7 +17,7 @@ import GroupIcon from '@mui/icons-material/Group'; // Usuários
 import SectorFlowLogo from '../assets/logo1.png'; 
 
 // Largura fixa para o menu lateral
-const drawerWidth = 240;
+const drawerWidth = 200;
 
 // ----------------------------------------------------
 // SUBCOMPONENTE: Menu Lateral (Sidebar)
@@ -59,7 +59,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
         >
             {/* 1. Logo/Título da Plataforma */}
             <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid #e0e0e0' }}>
-                <img src={SectorFlowLogo} alt="SectorFlow Logo" style={{ height: '50px', marginBottom: '8px' }} />
+                <img src={SectorFlowLogo} alt="SectorFlow Logo" style={{ height: '100px' }} />
                 <Typography variant="h6" fontWeight="bold" sx={{ color: primaryColor }}> {/* Título com a cor primária */}
                      SectorFlow
                 </Typography>
@@ -76,7 +76,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                         key={item.name}
                         onClick={() => navigate(item.path)}
                         sx={{
-                            borderRadius: 1,
+                            borderRadius: 1.5,
                             '&:hover': { bgcolor: hoverBg }, // Cor de hover mais suave
                             mb: 0.5
                         }}

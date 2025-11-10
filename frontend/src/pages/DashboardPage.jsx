@@ -211,6 +211,11 @@ function DashboardPage({ loggedUser }) {
             <LocalOfferIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20 }} />
             <ListItemText
                 primary={<Typography variant="body1" fontWeight="medium">{product.name}</Typography>}
+                secondary={
+                    <Typography variant="body2" color="textSecondary"> 
+                        {'Setor: '+ product.Sector?.name || 'Sem setor'}
+                    </Typography>
+                }
             />
             <Box textAlign="right">
                 <Typography variant="body1" fontWeight="bold">
