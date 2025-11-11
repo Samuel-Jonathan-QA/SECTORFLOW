@@ -110,10 +110,10 @@ function ProdutosPage({ userRole, userSectorIds }) {
     return (
         // Aplicando o fundo cinza claro na raiz
         <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', width: '100%' }}>
-            // Ajustando padding do Container
+            {/* Ajustando padding do Container */}
             <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
 
-                // Cabeçalho e Título
+                {/* Cabeçalho e Título */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                         Gerenciamento de Produtos
@@ -121,28 +121,28 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     
                 </Box>
 
-                // Separador
+                {/* Separador */}
                 <Divider sx={{ mb: 4 }} />
 
                 <Grid container spacing={3}>
-                    // COLUNA ESQUERDA: Criação de Novo Produto
+                    {/* COLUNA ESQUERDA: Criação de Novo Produto */}
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom fontWeight="medium">
                             Criar Novo Produto
                         </Typography>
-                        // Componente de formulário para CRIAÇÃO
+                        {/* Componente de formulário para CRIAÇÃO */}
                         <ProductForm
                             sectors={allowedSectors} // Lista filtrada/completa para o formulário
                             onFinish={handleCloseModal}
                         />
                     </Grid>
 
-                    // COLUNA DIREITA: Lista de Produtos
+                    {/* COLUNA DIREITA: Lista de Produtos */}
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom fontWeight="medium">
                             Lista de Produtos
                         </Typography>
-                        // Componente de listagem
+                        {/* Componente de listagem */}
                         <ProductList
                             products={products}
                             sectors={allSectors} // Passando a lista COMPLETA de setores para o List
@@ -155,7 +155,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     </Grid>
                 </Grid>
 
-                // MODAL DE EDIÇÃO
+                {/* MODAL DE EDIÇÃO */}
                 <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
                     <DialogTitle>
                         {editingProduct ? 'Editar Produto' : 'Criar Produto'}
