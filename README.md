@@ -42,19 +42,20 @@ O sistema implementa **Role-Based Access Control (RBAC)** em cada rota da API RE
 ### 1. Gerenciamento de Usuários
 Permite ao ADMIN criar, editar e excluir usuários, além de atribuir-lhes **Roles** e associá-los a **Setores** específicos.
 - **Status:** ✅ Completo (com autorização por Role)
-- <img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f14567c5-5e9a-4a7e-9ac5-0eb4ec4667a8" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f14567c5-5e9a-4a7e-9ac5-0eb4ec4667a8" />
 
 
 ### 2. Gerenciamento de Setores
 Permite ao ADMIN a criação e gestão dos setores da empresa, servindo como a principal forma de segmentação do sistema.
 - **Status:** ✅ Completo (com autorização por Role)
-- <img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/12f3d0ec-13eb-4f27-8b5f-c48c0df46094" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/12f3d0ec-13eb-4f27-8b5f-c48c0df46094" />
 
 
 ### 3. Gerenciamento de Produtos
 Módulo central para o fluxo de trabalho. Os produtos são associados a um setor e podem ter acesso limitado baseado na Role do usuário.
 - **Status:** ✅ Completo (com autorização e filtros por Role/Setor)
-- <img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/30e59f03-469f-4248-a4e5-862077119ef7" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/4ab37a70-f844-4b70-afb1-c8835fa962bc" />
+
 
 ---
 
