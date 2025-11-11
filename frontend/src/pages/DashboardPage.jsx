@@ -1,5 +1,3 @@
-// frontend/src/pages/DashboardPage.js (CONTEÚDO FINALMENTE CORRIGIDO)
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Container, Grid, Paper, Typography, Box, Divider, 
@@ -8,13 +6,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import API from '../api'; 
 
-// Ícones para o Dashboard (Cards)
+// Importa ícones para os Cards e Listas
 import InventoryIcon from '@mui/icons-material/Inventory'; 
 import CategoryIcon from '@mui/icons-material/Category'; 
 import GroupIcon from '@mui/icons-material/Group'; 
 import PaidIcon from '@mui/icons-material/Paid'; 
-
-// Ícones para as listas
 import DescriptionIcon from '@mui/icons-material/Description'; 
 import LocalOfferIcon from '@mui/icons-material/LocalOffer'; 
 
@@ -25,7 +21,7 @@ function DashboardPage({ loggedUser }) {
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
 
-    // Funções de Busca (Usa useCallback para otimização)
+    // Busca os dados de setores ativos.
     const fetchSectors = useCallback(async () => {
         try {
             const res = await API.get('/sectors');
@@ -35,6 +31,7 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
+    // Busca a lista de usuários.
     const fetchUsers = useCallback(async () => {
         try {
             const res = await API.get('/users');
@@ -44,6 +41,7 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
+    // Busca a lista de produtos.
     const fetchProducts = useCallback(async () => {
         try {
             const res = await API.get('/products');
@@ -53,23 +51,21 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Extrair Role
+    // Extrai a role do usuário logado.
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
 
-    // Efeitos
+    // Carrega dados iniciais baseados na role: ADMIN carrega tudo, outros carregam produtos.
     useEffect(() => {
-        // ADMIN carrega todos os dados
         if (userRole === 'ADMIN') {
             fetchSectors();
             fetchUsers();
             fetchProducts();
         } else if (userRole === 'VENDEDOR' || userRole === 'USER') {
-            // Outras roles só carregam produtos
             fetchProducts();
         }
     }, [userRole, fetchSectors, fetchUsers, fetchProducts]);
 
-    // CÁLCULO: Valor Total em Estoque
+    // Calcula e formata o valor total de todos os produtos em estoque (BRL).
     const calculateStockValue = () => {
         const totalValue = products.reduce((acc, product) => {
             const price = parseFloat(product.price || 0);
@@ -88,7 +84,7 @@ function DashboardPage({ loggedUser }) {
     const totalStockValueFormatted = calculateStockValue();
 
 
-    // LÓGICA CONDICIONAL DOS CARDS
+    // Define os cards de métricas no topo. Setores e Usuários ocultos para não-ADMINs.
     const baseCards = [
         { 
             label: 'Total de Produtos', 
@@ -98,7 +94,7 @@ function DashboardPage({ loggedUser }) {
             color: '#4caf50', 
             iconBg: '#e8f5e9' 
         },
-        // Oculta Setores e Usuários para não-ADMINs
+        // Cards de Setores e Usuários (apenas para ADMIN)
         ...(userRole === 'ADMIN' ? [
             { 
                 label: 'Total de Setores', 
@@ -129,12 +125,9 @@ function DashboardPage({ loggedUser }) {
         },
     ];
 
-    // ----------------------------------------------------
-    // Componente de um Único Card
-    // ----------------------------------------------------
+    // Componente para renderizar um card de métrica individual.
     const MetricCard = ({ card }) => {
         const renderCount = () => {
-            // Ajuste de Tamanho: Menor para valor de moeda, maior para contagem
             const fontSize = card.isCurrency ? '1.5rem' : '1.5rem';
             
             return (
@@ -160,9 +153,8 @@ function DashboardPage({ loggedUser }) {
                     cursor: 'pointer',
                     border: '1px solid #f0f0f0',
                     transition: 'all 0.2s ease-in-out',
-                    // 🚨 Adicionado: Define o Paper como o ponto de referência 🚨
                     position: 'relative', 
-                    overflow: 'hidden', // Esconde qualquer parte do ícone que passe da borda
+                    overflow: 'hidden', 
                     '&:hover': {
                         transform: 'translateY(-2px)',
                         boxShadow: hoverShadow,
@@ -170,7 +162,7 @@ function DashboardPage({ loggedUser }) {
                     },
                 }}
             >
-                {/* 🚨 CONTEÚDO DE TEXTO E VALOR (Agora Vertical) 🚨 */}
+                {/* Conteúdo do Card */}
                 <Box textAlign="left" sx={{ zIndex: 2 }}> 
                     <Typography variant="body2" color="textSecondary" fontWeight="medium">
                         {card.label}
@@ -178,19 +170,18 @@ function DashboardPage({ loggedUser }) {
                     {renderCount()}
                 </Box>
                 
-                {/* 🚨 ÍCONE POSICIONADO ABSOLUTAMENTE NO CANTO 🚨 */}
+                {/* Ícone posicionado no canto superior direito */}
                 <Box sx={{
                     width: 80, height: 80, 
                     borderRadius: '50%', 
                     backgroundColor: card.iconBg,
-                    // 🚨 POSICIONAMENTO ABSOLUTO PARA MOVER PARA O CANTO 🚨
                     position: 'absolute', 
-                    top: -15,   // Sobe o ícone 
-                    right: -15, // Move para a direita (ajuste esse valor se precisar de mais ou menos margem)
+                    top: -15,   
+                    right: -15, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    zIndex: 1, // Ícone deve ficar abaixo do texto do card (ou igual)
+                    zIndex: 1, 
                     
                     '&::before': { content: '""', position: 'absolute', width: '120%', height: '120%', 
                         borderRadius: '50%', opacity: 0.5, backgroundColor: card.iconBg, zIndex: 0,
@@ -203,9 +194,7 @@ function DashboardPage({ loggedUser }) {
     };
 
 
-    // ----------------------------------------------------
-    // Componentes de Lista (NÃO ALTERADOS)
-    // ----------------------------------------------------
+    // Componente para exibir um item de produto na lista.
     const ProductListItem = ({ product }) => (
         <ListItem sx={{ px: 0 }}>
             <LocalOfferIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20 }} />
@@ -228,6 +217,7 @@ function DashboardPage({ loggedUser }) {
         </ListItem>
     );
 
+    // Componente para exibir um item de setor na lista.
     const SectorListItem = ({ sector }) => (
         <ListItem sx={{ px: 0 }}>
             <DescriptionIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20 }} />
@@ -237,16 +227,19 @@ function DashboardPage({ loggedUser }) {
         </ListItem>
     );
 
+    // Filtra os 5 produtos mais recentes e os 5 setores mais recentes.
     const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
     const activeSectors = sectors.slice(0, 5);
 
 
-    // ----------------------------------------------------
-    // RENDERIZAÇÃO PRINCIPAL (NÃO ALTERADA)
-    // ----------------------------------------------------
+    // Lógica para visibilidade do painel de Setores (Oculto para VENDEDOR).
+    const showSectorsPanel = userRole !== 'VENDEDOR';
+    const productGridSize = showSectorsPanel ? 7 : 12; 
+
+
     return (
         <>
-            {/* CABEÇALHO */}
+            {/* Bloco de Cabeçalho do Dashboard */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                     Dashboard
@@ -268,7 +261,7 @@ function DashboardPage({ loggedUser }) {
             <Grid container spacing={3}>
 
                 {/* Painel de Produtos Recentes */}
-                <Grid item xs={12} md={7}>
+                <Grid item xs={12} md={productGridSize}>
                     <Typography variant="h5" fontWeight="medium" gutterBottom>
                         Produtos Recentes
                     </Typography>
@@ -289,27 +282,29 @@ function DashboardPage({ loggedUser }) {
                     </Paper>
                 </Grid>
 
-                {/* Painel de Setores Ativos */}
-                <Grid item xs={12} md={5}>
-                    <Typography variant="h5" fontWeight="medium" gutterBottom>
-                        Setores Ativos
-                    </Typography>
-                    <Paper elevation={0} sx={{ p: 3, border: '1px solid #f0f0f0', borderRadius: 2 }}>
-                        <List disablePadding>
-                            {activeSectors.map((sector, index) => (
-                                <Box key={sector.id || index}>
-                                    <SectorListItem sector={sector} />
-                                    {index < activeSectors.length - 1 && <Divider component="li" />}
-                                </Box>
-                            ))}
-                        </List>
-                        {activeSectors.length === 0 && (
-                            <Typography variant="body2" color="textSecondary" sx={{ p: 2, textAlign: 'center' }}>
-                                Nenhum setor ativo encontrado.
-                            </Typography>
-                        )}
-                    </Paper>
-                </Grid>
+                {/* Painel de Setores Ativos (Oculto para VENDEDOR) */}
+                {showSectorsPanel && (
+                    <Grid item xs={12} md={5}>
+                        <Typography variant="h5" fontWeight="medium" gutterBottom>
+                            Setores Ativos
+                        </Typography>
+                        <Paper elevation={0} sx={{ p: 3, border: '1px solid #f0f0f0', borderRadius: 2 }}>
+                            <List disablePadding>
+                                {activeSectors.map((sector, index) => (
+                                    <Box key={sector.id || index}>
+                                        <SectorListItem sector={sector} />
+                                        {index < activeSectors.length - 1 && <Divider component="li" />}
+                                    </Box>
+                                ))}
+                            </List>
+                            {activeSectors.length === 0 && (
+                                <Typography variant="body2" color="textSecondary" sx={{ p: 2, textAlign: 'center' }}>
+                                    Nenhum setor ativo encontrado.
+                                </Typography>
+                            )}
+                        </Paper>
+                    </Grid>
+                )}
             </Grid>
         </>
     );
