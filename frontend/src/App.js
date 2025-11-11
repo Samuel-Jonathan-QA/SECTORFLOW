@@ -1,9 +1,11 @@
 // src/App.js (VERSÃO FINAL E CORRIGIDA COM LAYOUT)
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'; // 🚨 Adicionado useNavigate
 import { ThemeProvider, createTheme, CircularProgress } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 
+// 🚨 NOVO: Importe a função setLogoutHandler do seu api.js
+import API, { logout, setLogoutHandler } from './api'; 
 // 🚨 NOVO: Importe o componente Layout 
 import Layout from './components/Layout';
 
@@ -13,7 +15,7 @@ import SetoresPage from './pages/SetoresPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ProdutosPage from './pages/ProdutosPage';
 import Home from './pages/Home';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify'; // 🚨 Importado toast
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -34,12 +36,22 @@ const theme = createTheme({
 });
 // FIM DA DEFINIÇÃO DO TEMA 
 
+// Componente Wrapper para obter acesso ao useNavigate
+function AppContent() {
+    const navigate = useNavigate(); // 🚨 useNavigate só pode ser chamado dentro do Router
 
-function App() {
     const [loggedUser, setLoggedUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 1. Lógica para persistência de Login
+    // Funções de logout/limpeza
+    const performAppLogout = () => {
+        logout(); // Limpa LocalStorage e o header do Axios
+        setLoggedUser(null);
+        toast.error("Sessão expirada. Faça login novamente."); // Mensagem de erro
+        navigate('/'); // 🚨 REDIRECIONAMENTO MANDATÓRIO PARA A TELA DE LOGIN
+    };
+    
+    // 1. Lógica para persistência de Login (Existente)
     useEffect(() => {
         const storedUser = localStorage.getItem('loggedUser');
         if (storedUser) {
@@ -53,12 +65,19 @@ function App() {
         }
         setIsLoading(false);
     }, []);
-
-    // 2. Funções utilitárias para extrair dados do usuário
+    
+    // 🚨 2. NOVO: Injeção do Handler de Logout no Axios 🚨
+    useEffect(() => {
+        // Isso permite que o interceptor no api.js chame performAppLogout()
+        // sempre que receber um erro 401.
+        setLogoutHandler(performAppLogout);
+    }, [navigate]); // Dependência em navigate garante que a função de navegação esteja estável
+    
+    // 3. Funções utilitárias para extrair dados do usuário
     const getUserRole = () => loggedUser?.role;
     const getUserSectorIds = () => loggedUser?.sectorIds || [];
 
-    // 3. Renderização Condicional
+    // 4. Renderização Condicional
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -68,79 +87,80 @@ function App() {
     }
 
     return (
+        <Routes>
+            {/* Rota de Login/Home (Não precisa do Layout) */}
+            <Route
+                path="/"
+                element={<Home loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
+            />
+
+            {/* 🎯 ROTAS PROTEGIDAS (ENVOLVIDAS PELO LAYOUT) 🎯 */}
+            
+            {/* 1. Rota do Dashboard */}
+            <Route
+                path="/dashboard"
+                element={
+                    <ProtectedRoute loggedUser={loggedUser}>
+                        <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
+                            <DashboardPage loggedUser={loggedUser} />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* 2. Rota de Setores */}
+            <Route
+                path="/sectors"
+                element={
+                    <ProtectedRoute loggedUser={loggedUser}>
+                        <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
+                            <SetoresPage userRole={getUserRole()} />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* 3. Rota de Usuários */}
+            <Route
+                path="/users"
+                element={
+                    <ProtectedRoute loggedUser={loggedUser}>
+                        <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
+                            <UsuariosPage userRole={getUserRole()} />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* 4. Rota de Produtos */}
+            <Route
+                path="/products"
+                element={
+                    <ProtectedRoute loggedUser={loggedUser}>
+                        <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
+                            <ProdutosPage
+                                loggedUser={loggedUser}
+                                userRole={getUserRole()}
+                                userSectorIds={getUserSectorIds()}
+                            />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Rota de fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
+}
+
+// Componente principal para incluir o BrowserRouter
+function App() {
+    return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Router>
-                <Routes>
-                    {/* Rota de Login/Home (Não precisa do Layout) */}
-                    <Route
-                        path="/"
-                        element={<Home loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
-                    />
-
-                    {/* 🎯 ROTAS PROTEGIDAS (ENVOLVIDAS PELO LAYOUT) 🎯 */}
-
-                    {/* 1. Rota do Dashboard */}
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <ProtectedRoute loggedUser={loggedUser}>
-                                {/* 🎯 USANDO LAYOUT 🎯 */}
-                                <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
-                                    {/* 🚨 CORRIGIDO O NOME DO COMPONENTE (DashboardPage) 🚨 */}
-                                    <DashboardPage loggedUser={loggedUser} />
-                                </Layout>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    {/* 2. Rota de Setores */}
-                    <Route
-                        path="/sectors"
-                        element={
-                            <ProtectedRoute loggedUser={loggedUser}>
-                                {/* 🎯 USANDO LAYOUT 🎯 */}
-                                <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
-                                    <SetoresPage userRole={getUserRole()} />
-                                </Layout>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    {/* 3. Rota de Usuários */}
-                    <Route
-                        path="/users"
-                        element={
-                            <ProtectedRoute loggedUser={loggedUser}>
-                                {/* 🎯 USANDO LAYOUT 🎯 */}
-                                <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
-                                    <UsuariosPage userRole={getUserRole()} />
-                                </Layout>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    {/* 4. Rota de Produtos */}
-                    <Route
-                        path="/products"
-                        element={
-                            <ProtectedRoute loggedUser={loggedUser}>
-                                {/* 🎯 USANDO LAYOUT 🎯 */}
-                                <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
-                                    <ProdutosPage
-                                        loggedUser={loggedUser}
-                                        userRole={getUserRole()}
-                                        userSectorIds={getUserSectorIds()}
-                                    />
-                                </Layout>
-                            </ProtectedRoute>
-                        }
-                    />
-
-                    {/* Rota de fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-
-                </Routes>
+                <AppContent />
             </Router>
             <ToastContainer position="top-right" autoClose={3000} theme="colored" />
         </ThemeProvider>

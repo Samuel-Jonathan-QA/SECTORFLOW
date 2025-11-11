@@ -7,7 +7,23 @@ const api = axios.create({
     baseURL: 'http://localhost:3001/api', 
 });
 
-// Interceptor de Requisição para anexar o Token JWT
+// ------------------------------------------------------------------
+// VARIÁVEL E FUNÇÃO PARA INJETAR O LOGOUT DO COMPONENTE PRINCIPAL
+// ------------------------------------------------------------------
+// Variável para armazenar a função de logout/navegação (será injetada de App.js)
+let onUnauthenticatedError = () => {};
+
+/**
+ * Permite que o componente App.js injete a lógica de logout e navegação.
+ * @param {Function} handler - Função que limpa o estado e redireciona para o login.
+ */
+export const setLogoutHandler = (handler) => {
+    onUnauthenticatedError = handler;
+};
+
+// ------------------------------------------------------------------
+// INTERCEPTOR DE REQUISIÇÃO (EXISTENTE)
+// ------------------------------------------------------------------
 api.interceptors.request.use((config) => {
     // 1. Busca o valor da chave 'loggedUser' no Local Storage
     const loggedUserJSON = localStorage.getItem('loggedUser');
@@ -37,7 +53,31 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-// Exporta a função de logout
+
+// ------------------------------------------------------------------
+// 🚨 INTERCEPTOR DE RESPOSTA (NOVO: LÓGICA DE JWT EXPIRED/401) 🚨
+// ------------------------------------------------------------------
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // Checa se o erro é 401 (Unauthorized), que indica token inválido/expirado
+        if (error.response && error.response.status === 401) {
+            console.warn('Sessão expirada (401). Redirecionando para login...');
+            
+            // 🚨 Chama a função de logout e redirecionamento injetada 🚨
+            onUnauthenticatedError(); 
+
+            // Retorna um Promise que não resolve/rejeita para parar a propagação do erro
+            // nos componentes que fizeram a chamada original.
+            return new Promise(() => {}); 
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+
+// Exporta a função de logout (mantida)
 export const logout = () => {
     // Remove o objeto completo do usuário
     localStorage.removeItem('loggedUser');
