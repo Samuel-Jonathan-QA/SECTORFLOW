@@ -1,7 +1,6 @@
-// frontend/src/pages/ProdutosPage.jsx (Padronizado com o NOVO LAYOUT)
+// frontend/src/pages/ProdutosPage.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-// ✅ IMPORTANDO PAPER E DIVIDER
 import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button, Paper, Divider } from '@mui/material';
 import ProductForm from '../components/ProductForm';
 import ProductList from '../components/ProductList';
@@ -9,7 +8,6 @@ import API from '../api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
-// Recebe as props userRole e userSectorIds
 function ProdutosPage({ userRole, userSectorIds }) {
     const [products, setProducts] = useState([]);
     const [allSectors, setAllSectors] = useState([]);
@@ -21,26 +19,26 @@ function ProdutosPage({ userRole, userSectorIds }) {
     // HOOK DE NAVEGAÇÃO 
     const navigate = useNavigate();
 
-    // Lógica de permissão (robusta)
+    // Lógica de permissão
     const userRoleUpperCase = userRole ? userRole.toUpperCase() : '';
     const canManageProducts = userRoleUpperCase === 'ADMIN' || userRoleUpperCase === 'VENDEDOR';
     const isSeller = userRoleUpperCase === 'VENDEDOR';
 
-    // Define a lista de setores que o usuário PODE usar no formulário
+    // Define os setores que o usuário pode usar no formulário (filtrados para Vendedor)
     const allowedSectors = isSeller
         ? allSectors.filter(sector => userSectorIds && userSectorIds.includes(sector.id))
         : allSectors; // ADMIN vê todos
 
-    // Refatora a busca de produtos para usar useCallback
+    // Busca de produtos usando useCallback
     const fetchProducts = useCallback(async () => {
-        // Se não for VENDEDOR ou ADMIN, não faz a chamada
+        // Se não tiver permissão, não faz a chamada
         if (!canManageProducts) {
             setProducts([]);
             return;
         }
 
         try {
-            // Esta chamada API já retorna os produtos FILTRADOS pelo Backend!
+            // A API deve retornar os produtos filtrados pelo Backend
             const res = await API.get('/products');
             setProducts(res.data);
         } catch (error) {
@@ -49,7 +47,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
         }
     }, [canManageProducts]);
 
-    // Refatora a busca de setores para usar useCallback
+    // Busca de setores usando useCallback
     const fetchAllSectors = useCallback(async () => {
         try {
             const res = await API.get('/sectors');
@@ -60,24 +58,26 @@ function ProdutosPage({ userRole, userSectorIds }) {
         }
     }, []);
 
+    // Dispara a busca inicial de dados
     useEffect(() => {
         fetchProducts();
         fetchAllSectors();
     }, [fetchProducts, fetchAllSectors]);
 
-    // Lógica da Modal
+    // Lógica para abrir a Modal de Edição
     const handleEditClick = (product) => {
         setEditingProduct(product);
         setOpenModal(true);
     };
 
+    // Lógica para fechar a Modal e recarregar a lista
     const handleCloseModal = () => {
         setOpenModal(false);
         setEditingProduct(null);
-        fetchProducts(); // Recarrega a lista após fechar (criação ou edição)
+        fetchProducts(); 
     };
 
-    // Lógica de Deleção
+    // Lógica de Deleção de Produto
     const handleDeleteProduct = async (id) => {
         if (!window.confirm('Tem certeza que deseja deletar este produto?')) return;
         try {
@@ -89,9 +89,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
         }
     };
 
-    // ----------------------------------------------------
-    // RENDERIZAÇÃO CONDICIONAL DA TELA (Acesso Negado)
-    // ----------------------------------------------------
+    // Renderiza Acesso Negado se o usuário não puder gerenciar produtos
     if (!canManageProducts) {
         return (
             <Container maxWidth="md" style={{ marginTop: '50px', textAlign: 'center' }}>
@@ -108,14 +106,14 @@ function ProdutosPage({ userRole, userSectorIds }) {
         );
     }
 
-    // Se for ADMIN ou VENDEDOR, renderiza a tela de Gerenciamento completa
+    // Renderiza a tela de Gerenciamento completa para ADMIN ou VENDEDOR
     return (
-        // ✅ 1. APLICANDO O FUNDO CINZA CLARO NA RAIZ
+        // Aplicando o fundo cinza claro na raiz
         <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', width: '100%' }}>
-            {/* ✅ 2. AJUSTANDO PADDING DO CONTAINER */}
+            // Ajustando padding do Container
             <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
 
-                {/* ✅ 3. CABEÇALHO UNIFICADO (Título h3 forte + Botão Voltar) */}
+                // Cabeçalho e Título
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                         Gerenciamento de Produtos
@@ -123,41 +121,41 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     
                 </Box>
 
-                {/* ✅ 3. SEPARADOR */}
+                // Separador
                 <Divider sx={{ mb: 4 }} />
 
                 <Grid container spacing={3}>
-                    {/* COLUNA ESQUERDA: Criação de Novo Produto */}
+                    // COLUNA ESQUERDA: Criação de Novo Produto
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom fontWeight="medium">
                             Criar Novo Produto
                         </Typography>
-                        {/* ✅ 4. APLICANDO O PAPER (BRANCO, SEM ELEVATION, COM BORDA SUTIL) */}
+                        // Componente de formulário para CRIAÇÃO
                         <ProductForm
-                            sectors={allowedSectors} // Lista filtrada/completa
+                            sectors={allowedSectors} // Lista filtrada/completa para o formulário
                             onFinish={handleCloseModal}
-                        // Não passamos currentProduct, então este ProductForm é para CRIAÇÃO
                         />
                     </Grid>
 
-                    {/* COLUNA DIREITA: Lista de Produtos */}
+                    // COLUNA DIREITA: Lista de Produtos
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom fontWeight="medium">
                             Lista de Produtos
                         </Typography>
-                        {/* ✅ 4. APLICANDO O PAPER (BRANCO, SEM ELEVATION, COM BORDA SUTIL) */}
+                        // Componente de listagem
                         <ProductList
                             products={products}
+                            sectors={allSectors} // Passando a lista COMPLETA de setores para o List
                             onDelete={handleDeleteProduct}
                             onEdit={handleEditClick} // Passa o clique para abrir a modal de edição
                             userRole={userRole}
                             userSectorIds={userSectorIds}
                         />
-                       
+                        
                     </Grid>
                 </Grid>
 
-                {/* MODAL DE EDIÇÃO */}
+                // MODAL DE EDIÇÃO
                 <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
                     <DialogTitle>
                         {editingProduct ? 'Editar Produto' : 'Criar Produto'}
@@ -165,7 +163,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     <DialogContent>
                         <ProductForm
                             sectors={allowedSectors}
-                            currentProduct={editingProduct}
+                            currentProduct={editingProduct} // Passando o produto para EDIÇÃO
                             onFinish={handleCloseModal}
                         />
                     </DialogContent>

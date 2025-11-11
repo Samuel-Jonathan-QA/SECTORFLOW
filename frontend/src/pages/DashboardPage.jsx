@@ -1,3 +1,5 @@
+// frontend/src/pages/DashboardPage.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Container, Grid, Paper, Typography, Box, Divider, 
@@ -6,14 +8,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import API from '../api'; 
 
-// Importa ícones para os Cards e Listas
+import ProductList from '../components/ProductList'; 
+
+// Importa ícones para os Cards
 import InventoryIcon from '@mui/icons-material/Inventory'; 
 import CategoryIcon from '@mui/icons-material/Category'; 
 import GroupIcon from '@mui/icons-material/Group'; 
 import PaidIcon from '@mui/icons-material/Paid'; 
 import DescriptionIcon from '@mui/icons-material/Description'; 
-import LocalOfferIcon from '@mui/icons-material/LocalOffer'; 
-
 
 function DashboardPage({ loggedUser }) {
     const navigate = useNavigate();
@@ -21,7 +23,7 @@ function DashboardPage({ loggedUser }) {
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
 
-    // Busca os dados de setores ativos.
+    // Busca dados de setores ativos da API
     const fetchSectors = useCallback(async () => {
         try {
             const res = await API.get('/sectors');
@@ -31,7 +33,7 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Busca a lista de usuários.
+    // Busca a lista de usuários da API
     const fetchUsers = useCallback(async () => {
         try {
             const res = await API.get('/users');
@@ -41,7 +43,7 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Busca a lista de produtos.
+    // Busca a lista de produtos da API
     const fetchProducts = useCallback(async () => {
         try {
             const res = await API.get('/products');
@@ -51,10 +53,10 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Extrai a role do usuário logado.
+    // Extrai a role do usuário logado
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
 
-    // Carrega dados iniciais baseados na role: ADMIN carrega tudo, outros carregam produtos.
+    // Carrega dados iniciais baseados na role
     useEffect(() => {
         if (userRole === 'ADMIN') {
             fetchSectors();
@@ -65,7 +67,7 @@ function DashboardPage({ loggedUser }) {
         }
     }, [userRole, fetchSectors, fetchUsers, fetchProducts]);
 
-    // Calcula e formata o valor total de todos os produtos em estoque (BRL).
+    // Calcula e formata o valor total dos produtos em estoque (BRL)
     const calculateStockValue = () => {
         const totalValue = products.reduce((acc, product) => {
             const price = parseFloat(product.price || 0);
@@ -84,7 +86,7 @@ function DashboardPage({ loggedUser }) {
     const totalStockValueFormatted = calculateStockValue();
 
 
-    // Define os cards de métricas no topo. Setores e Usuários ocultos para não-ADMINs.
+    // Define os cards de métricas no topo
     const baseCards = [
         { 
             label: 'Total de Produtos', 
@@ -125,7 +127,7 @@ function DashboardPage({ loggedUser }) {
         },
     ];
 
-    // Componente para renderizar um card de métrica individual.
+    // Componente para renderizar um card de métrica individual
     const MetricCard = ({ card }) => {
         const renderCount = () => {
             const fontSize = card.isCurrency ? '1.5rem' : '1.5rem';
@@ -176,7 +178,7 @@ function DashboardPage({ loggedUser }) {
                     borderRadius: '50%', 
                     backgroundColor: card.iconBg,
                     position: 'absolute', 
-                    top: -15,   
+                    top: -15,  
                     right: -15, 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -193,31 +195,7 @@ function DashboardPage({ loggedUser }) {
         );
     };
 
-
-    // Componente para exibir um item de produto na lista.
-    const ProductListItem = ({ product }) => (
-        <ListItem sx={{ px: 0 }}>
-            <LocalOfferIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20 }} />
-            <ListItemText
-                primary={<Typography variant="body1" fontWeight="medium">{product.name}</Typography>}
-                secondary={
-                    <Typography variant="body2" color="textSecondary"> 
-                        {'Setor: '+ product.Sector?.name || 'Sem setor'}
-                    </Typography>
-                }
-            />
-            <Box textAlign="right">
-                <Typography variant="body1" fontWeight="bold">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price || 0)}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                    {product.quantity || 0} un.
-                </Typography>
-            </Box>
-        </ListItem>
-    );
-
-    // Componente para exibir um item de setor na lista.
+    // Componente para exibir um item de setor na lista
     const SectorListItem = ({ sector }) => (
         <ListItem sx={{ px: 0 }}>
             <DescriptionIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20 }} />
@@ -227,18 +205,20 @@ function DashboardPage({ loggedUser }) {
         </ListItem>
     );
 
-    // Filtra os 5 produtos mais recentes e os 5 setores mais recentes.
-    const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    // Filtra os 4 produtos mais recentes
+    const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
+    // Filtra os 5 setores mais recentes/ativos
     const activeSectors = sectors.slice(0, 5);
 
 
-    // Lógica para visibilidade do painel de Setores (Oculto para VENDEDOR).
+    // Lógica para visibilidade do painel de Setores (Oculto para VENDEDOR)
     const showSectorsPanel = userRole !== 'VENDEDOR';
     const productGridSize = showSectorsPanel ? 7 : 12; 
 
 
     return (
-        <>
+        <Container maxWidth="xl" sx={{ pt: 3 }}>
+            
             {/* Bloco de Cabeçalho do Dashboard */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
@@ -265,21 +245,20 @@ function DashboardPage({ loggedUser }) {
                     <Typography variant="h5" fontWeight="medium" gutterBottom>
                         Produtos Recentes
                     </Typography>
-                    <Paper elevation={0} sx={{ p: 3, border: '1px solid #f0f0f0', borderRadius: 2 }}>
-                        <List disablePadding>
-                            {latestProducts.map((product, index) => (
-                                <Box key={product.id || index}>
-                                    <ProductListItem product={product} />
-                                    {index < latestProducts.length - 1 && <Divider component="li" />}
-                                </Box>
-                            ))}
-                        </List>
-                        {latestProducts.length === 0 && (
-                            <Typography variant="body2" color="textSecondary" sx={{ p: 2, textAlign: 'center' }}>
-                                Nenhum produto encontrado.
-                            </Typography>
-                        )}
-                    </Paper>
+                    
+                    <ProductList
+                        products={latestProducts}
+                        sectors={sectors} 
+                        
+                        // Oculta campos de busca e filtro por setores
+                        showControls={false} 
+                        
+                        // Oculta os botões de ação (Edição/Exclusão)
+                        hideActions={true} 
+                        
+                        height={410} 
+                    />
+
                 </Grid>
 
                 {/* Painel de Setores Ativos (Oculto para VENDEDOR) */}
@@ -306,7 +285,7 @@ function DashboardPage({ loggedUser }) {
                     </Grid>
                 )}
             </Grid>
-        </>
+        </Container>
     );
 }
 
