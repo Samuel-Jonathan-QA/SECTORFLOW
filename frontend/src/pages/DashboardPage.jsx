@@ -214,15 +214,23 @@ function DashboardPage({ loggedUser }) {
     // Lógica para visibilidade do painel de Setores (Oculto para VENDEDOR)
     const showSectorsPanel = userRole !== 'VENDEDOR';
     const productGridSize = showSectorsPanel ? 7 : 12; 
+    
+    // Lógica: Saudação personalizada
+    const firstName = loggedUser?.name ? loggedUser.name.split(' ')[0] : 'Usuário(a)';
+    const greetingText = `Olá, ${firstName}!`;
 
 
     return (
         <Container maxWidth="xl" sx={{ pt: 3 }}>
             
-            {/* Bloco de Cabeçalho do Dashboard */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            {/* Bloco de Cabeçalho do Dashboard (Separado em Título e Saudação) */}
+            <Box mb={2}>
                 <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                     Dashboard
+                </Typography>
+                {/* Subtítulo da Saudação, mais suave e amigável */}
+                <Typography variant="h6" color="textSecondary" fontWeight="regular" sx={{ mt: 0.5 }}>
+                    {greetingText} — Veja suas métricas e atividades recentes.
                 </Typography>
             </Box>
 
