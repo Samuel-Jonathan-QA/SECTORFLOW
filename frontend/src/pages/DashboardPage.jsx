@@ -58,8 +58,10 @@ function DashboardPage({ loggedUser }) {
 
     // Carrega dados iniciais baseados na role
     useEffect(() => {
+        // ✅ CORREÇÃO: Chamando fetchSectors() para todos para que o ProductList possa exibir o nome do setor
+        fetchSectors();
+
         if (userRole === 'ADMIN') {
-            fetchSectors();
             fetchUsers();
             fetchProducts();
         } else if (userRole === 'VENDEDOR' || userRole === 'USER') {
@@ -256,7 +258,7 @@ function DashboardPage({ loggedUser }) {
                     
                     <ProductList
                         products={latestProducts}
-                        sectors={sectors} 
+                        sectors={sectors} // Agora a lista 'sectors' não estará vazia
                         
                         // Oculta campos de busca e filtro por setores
                         showControls={false} 
