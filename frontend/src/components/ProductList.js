@@ -1,11 +1,11 @@
 // frontend/src/components/ProductList.js
 
-import React, { useState, useMemo } from 'react'; 
-import { 
-    List, ListItem, ListItemText, Typography, Paper, 
-    IconButton, Box, Divider, 
-    TextField, FormControl, InputLabel, Select, MenuItem, 
-    Grid 
+import React, { useState, useMemo } from 'react';
+import {
+    List, ListItem, ListItemText, Typography, Paper,
+    IconButton, Box, Divider,
+    TextField, FormControl, InputLabel, Select, MenuItem,
+    Grid
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -14,43 +14,42 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 /**
  * Componente que exibe a lista de produtos.
  */
-function ProductList({ 
-    products = [], 
-    sectors = [], 
-    searchTerm: controlledSearchTerm, 
-    onSearchChange: controlledOnSearchChange, 
-    selectedSectorId: controlledSelectedSectorId, 
-    onSectorChange: controlledOnSectorChange, 
-    showControls = true, 
-    onDelete, 
-    onEdit, 
-    userRole, 
-    userSectorIds, 
-    hideActions = false, 
-    height = 500 
+function ProductList({
+    products = [],
+    sectors = [],
+    searchTerm: controlledSearchTerm,
+    onSearchChange: controlledOnSearchChange,
+    selectedSectorId: controlledSelectedSectorId,
+    onSectorChange: controlledOnSectorChange,
+    showControls = true,
+    onDelete,
+    onEdit,
+    userRole,
+    userSectorIds,
+    hideActions = false,
+    height = 425
 }) {
 
-    // Estados internos para os controles de filtro se não forem controlados pela página pai
     const [internalSearchTerm, setInternalSearchTerm] = useState('');
     const [internalSelectedSectorId, setInternalSelectedSectorId] = useState('all');
 
     // Determina qual valor e qual handler usar (prop controlada ou estado interno)
     const currentSearchTerm = controlledSearchTerm !== undefined ? controlledSearchTerm : internalSearchTerm;
     const currentSelectedSectorId = controlledSelectedSectorId !== undefined ? controlledSelectedSectorId : internalSelectedSectorId;
-    
-    const handleSearchChange = controlledOnSearchChange 
-        ? controlledOnSearchChange 
+
+    const handleSearchChange = controlledOnSearchChange
+        ? controlledOnSearchChange
         : (e) => setInternalSearchTerm(e.target.value);
 
     const handleSectorChange = controlledOnSectorChange
-        ? controlledOnSectorChange // Corrigido: Aqui deve usar controlledOnSectorChange
+        ? controlledOnSectorChange
         : (e) => setInternalSelectedSectorId(e.target.value);
 
 
     // Lógica para verificar se o usuário pode gerenciar o produto
     const canManageProduct = (product) => {
         if (!onEdit && !onDelete) return false;
-        
+
         const role = userRole ? userRole.toUpperCase() : '';
         if (role === 'ADMIN') {
             return true;
@@ -61,17 +60,17 @@ function ProductList({
         }
         return false;
     };
-    
+
     // Constantes de layout
     const PRICE_QUANTITY_WIDTH = 90;
-    const ACTIONS_WIDTH = 50; 
-    const RESERVED_WIDTH = PRICE_QUANTITY_WIDTH + ACTIONS_WIDTH + 60; 
+    const ACTIONS_WIDTH = 50;
+    const RESERVED_WIDTH = PRICE_QUANTITY_WIDTH + ACTIONS_WIDTH + 60;
 
-    // --- LÓGICA DE FILTRAGEM ---
+    // --- LÓGICA DE FILTRAGEM E ORDENAÇÃO ---
     const filteredProducts = useMemo(() => {
         const productsToFilter = Array.isArray(products) ? products : [];
 
-        return productsToFilter.filter(product => {
+        const filtered = productsToFilter.filter(product => {
             let matchesSearch = true;
             let matchesSector = true;
 
@@ -86,34 +85,43 @@ function ProductList({
                 const sectorIdNum = Number(currentSelectedSectorId);
                 matchesSector = product.sectorId === sectorIdNum;
             }
-            
+
             return matchesSearch && matchesSector;
         });
-    }, [products, currentSearchTerm, currentSelectedSectorId]);
-    // --- FIM DA LÓGICA DE FILTRAGEM ---
 
-    // ✅ LÓGICA DO FILTRO DE SETORES (CORRIGIDO: Exibe todos os setores que têm produto vinculado)
+        // 3. Ordenação: Novos produtos no topo (decrescente por ID)
+        // Usamos .slice() para criar uma cópia antes de ordenar, garantindo que o array original não seja mutado
+        return filtered.slice().sort((a, b) => {
+            // Se 'a.id' for maior que 'b.id', 'a' é mais novo e deve vir antes (resultado negativo)
+            // Se 'a.id' for menor que 'b.id', 'a' é mais antigo e deve vir depois (resultado positivo)
+            return b.id - a.id;
+        });
+
+    }, [products, currentSearchTerm, currentSelectedSectorId]);
+    // --- FIM DA LÓGICA DE FILTRAGEM E ORDENAÇÃO ---
+
+    // LÓGICA DO FILTRO DE SETORES (Exibe todos os setores que têm produto vinculado)
     const sectorsInDropdown = useMemo(() => {
         const allSectors = Array.isArray(sectors) ? sectors : [];
         const allProducts = Array.isArray(products) ? products : [];
 
         // Pega os IDs de todos os setores presentes na lista de PRODUTOS COMPLETA
         const sectorIdsInUse = new Set(allProducts.map(p => p.sectorId).filter(id => id !== undefined));
-        
+
         // Filtra a lista COMPLETA de setores para incluir APENAS aqueles que estão em uso
         return allSectors.filter(sector => sectorIdsInUse.has(sector.id));
-        
+
     }, [products, sectors]); // Depende apenas de products e sectors
 
 
     return (
         <Paper elevation={3} style={{ padding: '10px' }}>
-            
+
             {/* --- SEÇÃO DE FILTROS: SÓ É EXIBIDA SE showControls FOR TRUE --- */}
             {showControls && (
                 <Box sx={{ mb: 2 }}>
                     <Grid container spacing={2}>
-                        
+
                         {/* CAMPO DE BUSCA POR NOME */}
                         <Grid item xs={12} sm={8}>
                             <TextField
@@ -127,7 +135,7 @@ function ProductList({
                                 onChange={handleSearchChange}
                             />
                         </Grid>
-                        
+
                         {/* CAMPO DE FILTRO POR SETOR */}
                         <Grid item xs={12} sm={4}>
                             <FormControl fullWidth variant="outlined" size="small">
@@ -144,20 +152,20 @@ function ProductList({
                                     <MenuItem value="all">
                                         <em style={{ color: '#757575' }}>Todos os Setores</em>
                                     </MenuItem>
-                                    {/* ✅ Iterando sobre a lista de setores que possuem produtos */}
+                                    {/* Iterando sobre a lista de setores que possuem produtos */}
                                     {sectorsInDropdown.map((sector) => (
                                         <MenuItem key={sector.id} value={sector.id}>
                                             {sector.name}
                                         </MenuItem>
                                     ))}
                                     {/* Adiciona o setor ativo atual caso ele não esteja na lista (pode ser um setor sem outros produtos) */}
-                                    {currentSelectedSectorId !== 'all' && 
-                                     !sectorsInDropdown.some(s => s.id === currentSelectedSectorId) &&
-                                     sectors.find(s => s.id === currentSelectedSectorId) && (
-                                        <MenuItem key={currentSelectedSectorId} value={currentSelectedSectorId} style={{ backgroundColor: '#fffbe5' }}>
-                                            {sectors.find(s => s.id === currentSelectedSectorId)?.name} (Setor Ativo)
-                                        </MenuItem>
-                                    )}
+                                    {currentSelectedSectorId !== 'all' &&
+                                        !sectorsInDropdown.some(s => s.id === currentSelectedSectorId) &&
+                                        sectors.find(s => s.id === currentSelectedSectorId) && (
+                                            <MenuItem key={currentSelectedSectorId} value={currentSelectedSectorId} style={{ backgroundColor: '#fffbe5' }}>
+                                                {sectors.find(s => s.id === currentSelectedSectorId)?.name} (Setor Ativo)
+                                            </MenuItem>
+                                        )}
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -165,32 +173,32 @@ function ProductList({
                     </Grid>
                 </Box>
             )}
-            
-            {showControls && <Divider sx={{ mb: 2 }} />} 
+
+            {showControls && <Divider sx={{ mb: 2 }} />}
 
 
             <div style={{ height: `${height}px`, overflowY: 'auto' }}>
                 <List disablePadding>
-                    {filteredProducts.map((product, index) => { 
-                        
+                    {filteredProducts.map((product, index) => {
+
                         const canModify = canManageProduct(product);
-                        const showActionsBlock = canModify && !hideActions; 
-                        
-                        const formattedPrice = new Intl.NumberFormat('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL' 
+                        const showActionsBlock = canModify && !hideActions;
+
+                        const formattedPrice = new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
                         }).format(product.price || 0);
 
                         return (
                             <React.Fragment key={product.id}>
                                 <ListItem
-                                    sx={{ py: 1.5, px: 2 }} 
+                                    sx={{ py: 1.5, px: 2 }}
                                     secondaryAction={
-                                        <Box display="flex" alignItems="center"> 
-                                            <Box textAlign="right" sx={{ 
-                                                flexShrink: 0, 
-                                                minWidth: PRICE_QUANTITY_WIDTH, 
-                                                mr: showActionsBlock ? 1 : 0 
+                                        <Box display="flex" alignItems="center">
+                                            <Box textAlign="right" sx={{
+                                                flexShrink: 0,
+                                                minWidth: PRICE_QUANTITY_WIDTH,
+                                                mr: showActionsBlock ? 1 : 0
                                             }}>
                                                 <Typography variant="body1" fontWeight="bold">
                                                     {formattedPrice}
@@ -199,13 +207,13 @@ function ProductList({
                                                     {product.quantity || 0} un.
                                                 </Typography>
                                             </Box>
-                                            
+
                                             {showActionsBlock && (
-                                                <Box 
-                                                    display="flex" 
-                                                    flexDirection="column" 
+                                                <Box
+                                                    display="flex"
+                                                    flexDirection="column"
                                                     alignItems="center"
-                                                    minWidth={ACTIONS_WIDTH} 
+                                                    minWidth={ACTIONS_WIDTH}
                                                 >
                                                     <IconButton
                                                         edge="end"
@@ -236,28 +244,28 @@ function ProductList({
                                             noWrap: true,
                                             sx: {
                                                 overflow: 'hidden',
-                                                textOverflow: 'ellipsis', 
-                                                minWidth: 0, 
+                                                textOverflow: 'ellipsis',
+                                                minWidth: 0,
                                                 display: 'block',
                                                 whiteSpace: 'nowrap'
                                             }
                                         }}
                                         primary={<Typography variant="body1" fontWeight="medium" noWrap>{product.name}</Typography>}
                                         secondary={
-                                            <Typography variant="body2" color="textSecondary"> 
+                                            <Typography variant="body2" color="textSecondary">
                                                 {/* Encontra o nome do setor baseado no ID */}
-                                                {'Setor: '+ (sectors.find(s => s.id === product.sectorId)?.name || 'Sem setor')}
+                                                {'Setor: ' + (sectors.find(s => s.id === product.sectorId)?.name || 'Sem setor')}
                                             </Typography>
                                         }
-                                        sx={{ 
-                                            flexGrow: 0, 
-                                            flexShrink: 1, 
-                                            minWidth: 0, 
+                                        sx={{
+                                            flexGrow: 0,
+                                            flexShrink: 1,
+                                            minWidth: 0,
                                             mr: 2,
-                                            maxWidth: `calc(100% - ${RESERVED_WIDTH}px)` 
+                                            maxWidth: `calc(100% - ${RESERVED_WIDTH}px)`
                                         }}
                                     />
-                                    
+
                                 </ListItem>
 
                                 {index < filteredProducts.length - 1 && <Divider component="li" />}
@@ -269,8 +277,8 @@ function ProductList({
                     <Typography variant="body2" color="textSecondary" sx={{ p: 2, textAlign: 'center' }}>
                         {
                             (currentSearchTerm || currentSelectedSectorId !== 'all')
-                            ? 'Nenhum produto encontrado com os filtros aplicados.'
-                            : 'Nenhum produto cadastrado.'
+                                ? 'Nenhum produto encontrado com os filtros aplicados.'
+                                : 'Nenhum produto cadastrado.'
                         }
                     </Typography>
                 )}

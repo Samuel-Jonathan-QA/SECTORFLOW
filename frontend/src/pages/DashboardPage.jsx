@@ -208,7 +208,7 @@ function DashboardPage({ loggedUser }) {
     );
 
     // Filtra os 4 produtos mais recentes
-    const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
+    const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
     // Filtra os 5 setores mais recentes/ativos
     const activeSectors = sectors.slice(0, 5);
 
