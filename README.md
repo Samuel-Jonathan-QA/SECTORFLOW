@@ -30,10 +30,12 @@ O sistema implementa **Role-Based Access Control (RBAC)** em cada rota da API RE
 | **VENDEDOR** | CRUD em Produtos (limitado aos seus setores). Acesso a Setores (apenas leitura). | Focado apenas em **Produtos** e métricas de estoque. |
 
 ### 🖼️ Tela do Dashboard (Visão do ADMIN)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/6e9336e0-d6ae-40f6-b120-5376a461d38c" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/07ddba92-fecb-4c5e-a663-85d37b761e23" />
+
 
 ### 🖼️ Tela do Dashboard (Visão do VENDEDOR)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/974651a6-0b0a-4bb8-a650-4a8186556401" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f2910942-649c-4d37-9342-49225fa60eed" />
+
 
 ---
 
@@ -42,7 +44,7 @@ O sistema implementa **Role-Based Access Control (RBAC)** em cada rota da API RE
 ### 1. Gerenciamento de Usuários
 Permite ao ADMIN criar, editar e excluir usuários, além de atribuir-lhes **Roles** e associá-los a **Setores** específicos.
 - **Status:** ✅ Completo (com autorização por Role)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f14567c5-5e9a-4a7e-9ac5-0eb4ec4667a8" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/0dac021d-2d60-40fb-8155-c8252f4c3180" />
 
 
 ### 2. Gerenciamento de Setores
