@@ -6,9 +6,17 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-// Função utilitária para gerar o Token
+
+const JWT_SECRET_DEV = 'uma_chave_secreta_muito_longa_e_unica_para_o_sectorflow';
+
 const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+    const secret = process.env.JWT_SECRET || JWT_SECRET_DEV;
+
+    if (!secret) {
+        throw new Error('JWT secret not defined.');
+    }
+
+    return jwt.sign({ id }, secret, {
         expiresIn: '2h', 
     });
 };
