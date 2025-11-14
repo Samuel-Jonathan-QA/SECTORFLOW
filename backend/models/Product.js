@@ -1,9 +1,8 @@
-// backend/models/Product.js (AJUSTADO E CORRIGIDO)
+// backend/models/Product.js
 
 const { DataTypes } = require('sequelize');
-// 🚨 CORREÇÃO: Desestrutura a instância 'sequelize' 🚨
 const { sequelize } = require('../config/database'); 
-const Sector = require('./Sector'); // Importa o Sector
+const Sector = require('./Sector');
 
 const Product = sequelize.define('Product', {
     id: { 
@@ -15,12 +14,10 @@ const Product = sequelize.define('Product', {
         type: DataTypes.STRING, 
         allowNull: false 
     },
-    // 🚨 AJUSTE 1: Usar DECIMAL para precisão monetária
     price: { 
         type: DataTypes.DECIMAL(10, 2), 
         allowNull: false 
     },
-    // 💡 NOVO CAMPO: Quantidade em estoque 💡
     quantity: { 
         type: DataTypes.INTEGER, 
         allowNull: false,
@@ -29,7 +26,6 @@ const Product = sequelize.define('Product', {
     sectorId: { 
         type: DataTypes.INTEGER, 
         allowNull: false,
-        // 🚨 AJUSTE 2: Definir explicitamente as referências para clareza
         references: {
             model: Sector, 
             key: 'id'
@@ -41,16 +37,14 @@ const Product = sequelize.define('Product', {
     }
 });
 
-// Associação: Um Produto pertence a um Setor
 Product.belongsTo(Sector, { 
     foreignKey: 'sectorId',
-    as: 'Sector' // Alias para facilitar os 'includes'
+    as: 'Sector' 
 });
 
-// 🚨 AJUSTE 3: Asssociação reversa 🚨
 Sector.hasMany(Product, { 
     foreignKey: 'sectorId', 
-    as: 'Products' // Alias para consistência
+    as: 'Products'
 });
 
 module.exports = Product;

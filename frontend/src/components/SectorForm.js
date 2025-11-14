@@ -1,29 +1,21 @@
-// frontend/src/components/SectorForm.js (Refatorado para CRUD: Criação e Edição)
+// frontend/src/components/SectorForm.js
 
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Paper } from '@mui/material';
 import API from '../api';
-import { toast } from 'react-toastify'; // Importa o toast
+import { toast } from 'react-toastify'; 
 
-// 🚨 NOVO: Recebe currentSector para Edição e onFinish 🚨
 function SectorForm({ onFinish, currentSector }) {
     const [name, setName] = useState('');
     
-    // ----------------------------------------------------
-    // 1. EFEITO para preencher os dados de EDIÇÃO
-    // ----------------------------------------------------
     useEffect(() => {
         if (currentSector) {
             setName(currentSector.name); 
         } else {
-            // Limpa o estado no modo Criação
             setName('');
         }
     }, [currentSector]); 
 
-    // ----------------------------------------------------
-    // 2. FUNÇÃO de SUBMISSÃO (POST ou PUT)
-    // ----------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -37,19 +29,15 @@ function SectorForm({ onFinish, currentSector }) {
 
         try {
             if (isEditing) {
-                // Requisição PUT para Edição
                 await API.put(`/sectors/${currentSector.id}`, dataToSend);
                 toast.success('Setor atualizado com sucesso!');
             } else {
-                // Requisição POST para Criação
                 await API.post('/sectors', dataToSend);
                 toast.success('Setor criado com sucesso!');
             }
 
-            // Chama onFinish (que recarrega a lista e/ou fecha a modal)
             onFinish(); 
             
-            // Limpa o nome apenas se for Criação (na Edição a modal será fechada)
             if (!isEditing) {
                 setName('');
             }
@@ -61,9 +49,6 @@ function SectorForm({ onFinish, currentSector }) {
         }
     };
 
-    // ----------------------------------------------------
-    // 3. RENDERIZAÇÃO
-    // ----------------------------------------------------
     const submitButtonText = currentSector ? 'Atualizar Setor' : 'Adicionar Setor';
 
     return (

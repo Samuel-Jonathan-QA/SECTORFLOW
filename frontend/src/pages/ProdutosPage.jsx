@@ -12,33 +12,26 @@ function ProdutosPage({ userRole, userSectorIds }) {
     const [products, setProducts] = useState([]);
     const [allSectors, setAllSectors] = useState([]);
 
-    // Estados para a Modal de Edição
     const [openModal, setOpenModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
 
-    // HOOK DE NAVEGAÇÃO 
     const navigate = useNavigate();
 
-    // Lógica de permissão
     const userRoleUpperCase = userRole ? userRole.toUpperCase() : '';
     const canManageProducts = userRoleUpperCase === 'ADMIN' || userRoleUpperCase === 'VENDEDOR';
     const isSeller = userRoleUpperCase === 'VENDEDOR';
 
-    // Define os setores que o usuário pode usar no formulário (filtrados para Vendedor)
     const allowedSectors = isSeller
         ? allSectors.filter(sector => userSectorIds && userSectorIds.includes(sector.id))
-        : allSectors; // ADMIN vê todos
+        : allSectors; 
 
-    // Busca de produtos usando useCallback
     const fetchProducts = useCallback(async () => {
-        // Se não tiver permissão, não faz a chamada
         if (!canManageProducts) {
             setProducts([]);
             return;
         }
 
         try {
-            // A API deve retornar os produtos filtrados pelo Backend
             const res = await API.get('/products');
             setProducts(res.data);
         } catch (error) {
@@ -47,7 +40,6 @@ function ProdutosPage({ userRole, userSectorIds }) {
         }
     }, [canManageProducts]);
 
-    // Busca de setores usando useCallback
     const fetchAllSectors = useCallback(async () => {
         try {
             const res = await API.get('/sectors');
@@ -58,26 +50,22 @@ function ProdutosPage({ userRole, userSectorIds }) {
         }
     }, []);
 
-    // Dispara a busca inicial de dados
     useEffect(() => {
         fetchProducts();
         fetchAllSectors();
     }, [fetchProducts, fetchAllSectors]);
 
-    // Lógica para abrir a Modal de Edição
     const handleEditClick = (product) => {
         setEditingProduct(product);
         setOpenModal(true);
     };
 
-    // Lógica para fechar a Modal e recarregar a lista
     const handleCloseModal = () => {
         setOpenModal(false);
         setEditingProduct(null);
         fetchProducts(); 
     };
 
-    // Lógica de Deleção de Produto
     const handleDeleteProduct = async (id) => {
         if (!window.confirm('Tem certeza que deseja deletar este produto?')) return;
         try {
@@ -89,7 +77,6 @@ function ProdutosPage({ userRole, userSectorIds }) {
         }
     };
 
-    // Renderiza Acesso Negado se o usuário não puder gerenciar produtos
     if (!canManageProducts) {
         return (
             <Container maxWidth="md" style={{ marginTop: '50px', textAlign: 'center' }}>
@@ -106,14 +93,10 @@ function ProdutosPage({ userRole, userSectorIds }) {
         );
     }
 
-    // Renderiza a tela de Gerenciamento completa para ADMIN ou VENDEDOR
     return (
-        // Aplicando o fundo cinza claro na raiz
         <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', width: '100%' }}>
-            {/* Ajustando padding do Container */}
             <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
 
-                {/* Cabeçalho e Título */}
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                         Gerenciamento de Produtos
@@ -121,33 +104,28 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     
                 </Box>
 
-                {/* Separador */}
                 <Divider sx={{ mb: 4 }} />
 
                 <Grid container spacing={3}>
-                    {/* COLUNA ESQUERDA: Criação de Novo Produto */}
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom fontWeight="medium">
                             Criar Novo Produto
                         </Typography>
-                        {/* Componente de formulário para CRIAÇÃO */}
                         <ProductForm
-                            sectors={allowedSectors} // Lista filtrada/completa para o formulário
+                            sectors={allowedSectors} 
                             onFinish={handleCloseModal}
                         />
                     </Grid>
 
-                    {/* COLUNA DIREITA: Lista de Produtos */}
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" gutterBottom fontWeight="medium">
                             Lista de Produtos
                         </Typography>
-                        {/* Componente de listagem */}
                         <ProductList
                             products={products}
-                            sectors={allSectors} // Passando a lista COMPLETA de setores para o List
+                            sectors={allSectors} 
                             onDelete={handleDeleteProduct}
-                            onEdit={handleEditClick} // Passa o clique para abrir a modal de edição
+                            onEdit={handleEditClick} 
                             userRole={userRole}
                             userSectorIds={userSectorIds}
                         />
@@ -155,7 +133,6 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     </Grid>
                 </Grid>
 
-                {/* MODAL DE EDIÇÃO */}
                 <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
                     <DialogTitle>
                         {editingProduct ? 'Editar Produto' : 'Criar Produto'}
@@ -163,7 +140,7 @@ function ProdutosPage({ userRole, userSectorIds }) {
                     <DialogContent>
                         <ProductForm
                             sectors={allowedSectors}
-                            currentProduct={editingProduct} // Passando o produto para EDIÇÃO
+                            currentProduct={editingProduct} 
                             onFinish={handleCloseModal}
                         />
                     </DialogContent>

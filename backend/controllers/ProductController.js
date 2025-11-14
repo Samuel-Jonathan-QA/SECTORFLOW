@@ -1,33 +1,28 @@
-// backend/controllers/ProductController.js (VERSÃO FINAL CORRIGIDA)
+// backend/controllers/ProductController.js
 
-const { Op } = require('sequelize'); // Importa o operador ORM
+const { Op } = require('sequelize'); 
 const Product = require('../models/Product');
 const Sector = require('../models/Sector');
 
-// [GET] Listar todos os produtos (COM FILTRO DE PERMISSÃO)
 const getAllProducts = async (req, res) => {
     try {
-        const { role, sectorIds } = req.user; // Obtém info do usuário logado
+        const { role, sectorIds } = req.user;
 
         let whereCondition = {};
 
-        // 🚨 Lógica de Filtro para VENDEDOR 🚨
         if (role === 'VENDEDOR') {
-            // O vendedor só pode ver produtos em seus setores permitidos
             if (!sectorIds || sectorIds.length === 0) {
-                // Se for VENDEDOR e não tiver setores, retorna um array vazio imediatamente
                 return res.status(200).json([]);
             }
             
             whereCondition.sectorId = {
-                [Op.in]: sectorIds // Usa o operador IN para incluir todos os IDs permitidos
+                [Op.in]: sectorIds 
             };
         }
-        // Se for ADMIN ou USER, a whereCondition fica vazia e mostra todos.
 
         const products = await Product.findAll({
-            where: whereCondition, // Aplica o filtro
-            include: [{ model: Sector, as: 'Sector', attributes: ['id', 'name'] }] // Usa o alias 'Sector'
+            where: whereCondition, 
+            include: [{ model: Sector, as: 'Sector', attributes: ['id', 'name'] }] 
         });
         return res.status(200).json(products);
     } catch (error) {
@@ -36,7 +31,6 @@ const getAllProducts = async (req, res) => {
     }
 };
 
-// [POST] Criar um novo produto (COM VALIDAÇÃO DE PERMISSÃO)
 const createProduct = async (req, res) => {
     const { role, sectorIds } = req.user;
     let { name, sectorId, ...rest } = req.body;
@@ -45,14 +39,11 @@ const createProduct = async (req, res) => {
         return res.status(400).json({ error: 'Nome do produto e Sector ID são obrigatórios.' });
     }
 
-    // 🚨 Lógica de Validação para VENDEDOR 🚨
     if (role === 'VENDEDOR') {
-        // Verifica se o sectorId fornecido está na lista de setores do Vendedor
         if (!sectorIds || !sectorIds.includes(sectorId)) {
             return res.status(403).json({ error: 'Acesso negado. Você só pode criar produtos nos seus setores designados.' });
         }
     }
-    // O ADMIN pode criar em qualquer setor fornecido.
 
     try {
         const newProduct = await Product.create({ name, sectorId, ...rest });
@@ -68,11 +59,10 @@ const createProduct = async (req, res) => {
     }
 };
 
-// [PUT] Atualizar um produto (COM VALIDAÇÃO DE PERMISSÃO E DADOS)
 const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { role, sectorIds } = req.user;
-    let updateData = req.body; // Alterado para 'let' para permitir a remoção de sectorId
+    let updateData = req.body;
 
     try {
         const product = await Product.findByPk(id);
@@ -81,23 +71,18 @@ const updateProduct = async (req, res) => {
             return res.status(404).json({ error: 'Produto não encontrado.' });
         }
 
-        // 🚨 Lógica de Validação para VENDEDOR 🚨
         if (role === 'VENDEDOR') {
-            // 1. O Vendedor só pode alterar produtos nos seus setores.
             if (!sectorIds || !sectorIds.includes(product.sectorId)) {
                 return res.status(403).json({ error: 'Acesso negado. Você não pode alterar produtos fora dos seus setores.' });
             }
-            // 2. O Vendedor NÃO PODE alterar o sectorId de um produto
             if (updateData.sectorId && updateData.sectorId !== product.sectorId) {
                 return res.status(403).json({ error: 'Acesso negado. Vendedores não podem mudar o setor de um produto.' });
             }
             
-            // 💡 Melhoria: Se o VENDEDOR enviou sectorId (e não deu 403), removemos para garantir que não será aplicado.
             if (updateData.sectorId) {
                 delete updateData.sectorId; 
             }
         }
-        // O ADMIN pode fazer qualquer alteração.
 
         const [updatedRows] = await Product.update(updateData, { where: { id } });
         
@@ -112,7 +97,6 @@ const updateProduct = async (req, res) => {
     }
 };
 
-// [DELETE] Excluir um produto (COM VALIDAÇÃO DE PERMISSÃO E DADOS)
 const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const { role, sectorIds } = req.user;
@@ -124,14 +108,11 @@ const deleteProduct = async (req, res) => {
             return res.status(404).json({ error: 'Produto não encontrado.' });
         }
 
-        // 🚨 Lógica de Validação para VENDEDOR 🚨
         if (role === 'VENDEDOR') {
-            // O Vendedor só pode deletar produtos nos seus setores.
             if (!sectorIds || !sectorIds.includes(product.sectorId)) {
                 return res.status(403).json({ error: 'Acesso negado. Você só pode deletar produtos nos seus setores designados.' });
             }
         }
-        // O ADMIN pode deletar.
 
         const deletedRows = await Product.destroy({ where: { id } });
         
@@ -141,7 +122,6 @@ const deleteProduct = async (req, res) => {
         return res.status(500).json({ error: 'Não foi possível deletar o produto.' });
     }
 };
-
 
 module.exports = {
     getAllProducts,

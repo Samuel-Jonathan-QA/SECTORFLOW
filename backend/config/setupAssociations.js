@@ -1,11 +1,10 @@
-// backend/config/setupAssociations.js (CÓDIGO CRÍTICO)
+// backend/config/setupAssociations.js
 
 const User = require('../models/User');
 const Sector = require('../models/Sector');
 const UserSector = require('../models/UserSector');
 
 const setupAssociations = () => {
-    // Definindo a relação de Muitos para Muitos (M:N)
     
     User.belongsToMany(Sector, { 
         through: UserSector, 

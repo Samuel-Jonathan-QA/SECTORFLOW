@@ -58,7 +58,6 @@ function UserForm({ sectors, currentUser, onFinish }) {
         }
     }, [currentUser]); 
 
-    // Função para limpar todos os campos
     const clearForm = () => {
         setName('');
         setEmail('');
@@ -73,14 +72,12 @@ function UserForm({ sectors, currentUser, onFinish }) {
         }
     }, [role]);
     
-    // Função para lidar com a seleção MÚLTIPLA de setores
     const handleSectorChange = (event) => {
         const { target: { value } } = event;
         setSectorIds(value);
     };
 
 
-    // Função de SUBMISSÃO (POST ou PUT)
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -96,7 +93,6 @@ function UserForm({ sectors, currentUser, onFinish }) {
             return; 
         }
 
-        // Validação: Vendedor precisa de setor
         if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
             toast.error('Vendedores devem ser associados a pelo menos um setor.');
             return;

@@ -1,17 +1,13 @@
-// backend/routes/sectors.js (CORRIGIDO)
+// backend/routes/sectors.js
 
 const express = require('express');
 const router = express.Router();
 const SectorController = require('../controllers/SectorController');
-const protect = require('../middleware/auth'); // Middleware de Autenticação
-const checkRole = require('../middleware/permission'); // Middleware de Permissão
+const protect = require('../middleware/auth'); 
+const checkRole = require('../middleware/permission');
 
-// 🚨 Apenas ADMIN pode gerenciar setores 🚨
+router.get('/', protect, SectorController.getAllSectors);
 
-// Lista de Setores
-router.get('/', protect, SectorController.getAllSectors); // <-- CORREÇÃO APLICADA AQUI
-
-// Rotas de Criação, Edição e Deleção de Setores (Restrito ao ADMIN)
 router.post('/', protect, checkRole(['ADMIN']), SectorController.createSector);
 router.put('/:id', protect, checkRole(['ADMIN']), SectorController.updateSector);
 router.delete('/:id', protect, checkRole(['ADMIN']), SectorController.deleteSector);

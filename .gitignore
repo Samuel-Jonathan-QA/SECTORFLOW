@@ -1,13 +1,9 @@
-# 🚨 PASTA RAIZ: .gitignore 🚨
-
-# 1. Dependências (CRÍTICO)
-# Ignora todas as pastas de dependências (node_modules)
+# 1. Dependências
 /backend/node_modules
 /frontend/node_modules
 node_modules/
 
 # 2. Arquivos de Build/Cache
-# Ignora o build final do Frontend
 /frontend/build
 # Logs
 *.log
@@ -15,8 +11,6 @@ node_modules/
 Thumbs.db
 .DS_Store
 
-# 3. Segredos e Banco de Dados (CRÍTICO)
-# Nunca suba variáveis de ambiente (secrets)
+# 3. Segredos e Banco de Dados
 /backend/.env
-# Nunca suba o banco de dados local SQLite
 /backend/database.sqlite

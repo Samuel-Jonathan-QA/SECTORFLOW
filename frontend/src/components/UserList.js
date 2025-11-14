@@ -11,27 +11,21 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-/**
- * Componente que exibe a lista de usuários com busca por nome e filtro por Cargo.
- */
 function UserList({ 
     users = [], 
     onDelete, 
     onEdit 
 }) {
     
-    // 1. ESTADOS PARA CONTROLE
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('all');
 
-    // Mapeia todas as funções (roles) únicas presentes na lista de usuários
     const availableRoles = useMemo(() => {
         const roles = new Set(users.map(user => user.role).filter(role => role));
         return Array.from(roles);
     }, [users]);
     
 
-    // 2. LÓGICA DE FILTRAGEM (useMemo para performance)
     const filteredUsers = useMemo(() => {
         const usersToFilter = Array.isArray(users) ? users : [];
 
@@ -39,32 +33,26 @@ function UserList({
             let matchesSearch = true;
             let matchesRole = true;
 
-            // Filtro 1: Nome (Search Term)
             if (searchTerm) {
                 const term = searchTerm.toLowerCase().trim();
                 matchesSearch = user.name && user.name.toLowerCase().includes(term);
             }
 
-            // Filtro 2: Cargo (Role)
             if (selectedRole && selectedRole !== 'all') {
                 matchesRole = user.role === selectedRole;
             }
             
-            // Combinação de todos os filtros
             return matchesSearch && matchesRole;
         });
 
-        // Ordenação: Novos usuários no topo (decrescente por ID)
         return filtered.slice().sort((a, b) => b.id - a.id);
 
     }, [users, searchTerm, selectedRole]);
-    // --- FIM DA LÓGICA DE FILTRAGEM ---
 
 
     const LIST_HEIGHT = 440; 
     const ACTIONS_WIDTH = 50; 
 
-    // Função auxiliar para padronizar o bloco de ações
     const renderActions = (user) => (
         <Box
             display="flex"
@@ -85,7 +73,6 @@ function UserList({
                 </IconButton>
             )}
 
-            {/* BOTÃO DE DELETAR */}
             {onDelete && (
                 <IconButton
                     edge="end"
@@ -103,13 +90,10 @@ function UserList({
     return (
         <Paper elevation={3} style={{ padding: '10px' }}>
             
-            {/* 3. SEÇÃO DE FILTROS */}
             <Box sx={{ mb: 2 }}>
                 
-                {/* LINHA PRINCIPAL: BUSCA E FILTRO LADO A LADO */}
                 <Grid container spacing={2}> 
 
-                    {/* CAMPO DE BUSCA POR NOME (50% da largura em telas > sm) */}
                     <Grid item xs={12} sm={6}>
                         <TextField
                             fullWidth
@@ -121,7 +105,6 @@ function UserList({
                         />
                     </Grid>
 
-                    {/* CAMPO DE FILTRO POR CARGO (50% da largura em telas > sm) */}
                     <Grid item xs={12} sm={6}>
                         <FormControl fullWidth variant="outlined" size="small">
                             <InputLabel id="role-select-label">Cargo</InputLabel>
@@ -149,7 +132,6 @@ function UserList({
             </Box>
 
             <Divider sx={{ mb: 2 }} />
-            {/* FIM DA SEÇÃO DE FILTROS */}
 
 
             <div style={{ height: `${LIST_HEIGHT}px`, overflowY: 'auto' }}>
@@ -157,7 +139,6 @@ function UserList({
                     
                     {filteredUsers.map((user, index) => {
                         
-                        // ⭐️ CORREÇÃO APLICADA AQUI: Cargo antes do Email
                         const secondaryText = `Cargo: ${user.role} | ${user.email}`;
 
 

@@ -1,15 +1,9 @@
-// backend/routes/auth.js (VERIFIQUE E CORRIJA)
-
+// backend/routes/auth.js
 const express = require('express');
 const router = express.Router();
-// 🚨 Importa o módulo completo 🚨
 const authController = require('../controllers/AuthController'); 
-const protect = require('../middleware/auth'); // Se houver outras rotas
+const protect = require('../middleware/auth'); 
 
-// Rota de login
-router.post('/login', authController.login); // 🚨 Certifique-se de que é '.login' 🚨
-
-// Exemplo de outras rotas (se existirem)
-// router.get('/me', protect, authController.getMe); 
+router.post('/login', authController.login);
 
 module.exports = router;

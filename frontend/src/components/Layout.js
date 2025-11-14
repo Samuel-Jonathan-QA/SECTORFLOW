@@ -1,9 +1,9 @@
-// frontend/src/components/Layout.js (O Hub Central com Menu Lateral Fixo - Cores Ajustadas)
+// frontend/src/components/Layout.js
 
 import React from 'react';
 import {
     Box, List, ListItem, ListItemText, ListItemIcon, Typography,
-    Button, CssBaseline, Container, Divider // Adicionei Divider aqui para a separação
+    Button, CssBaseline, Container, Divider 
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../api'; 
@@ -11,17 +11,14 @@ import { logout } from '../api';
 // Ícones
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import InventoryIcon from '@mui/icons-material/Inventory'; // Produtos
-import CategoryIcon from '@mui/icons-material/Category'; // Setores
-import GroupIcon from '@mui/icons-material/Group'; // Usuários
+import InventoryIcon from '@mui/icons-material/Inventory'; 
+import CategoryIcon from '@mui/icons-material/Category'; 
+import GroupIcon from '@mui/icons-material/Group'; 
 import SectorFlowLogo from '../assets/logo1.png'; 
 
-// Largura fixa para o menu lateral
 const drawerWidth = 200;
 
-// ----------------------------------------------------
 // SUBCOMPONENTE: Menu Lateral (Sidebar)
-// ----------------------------------------------------
 const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
 
     const navItems = [
@@ -34,11 +31,11 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     ];
 
     // Definindo cores para o menu lateral e seus elementos
-    const sidebarBg = '#ffffff'; // Fundo branco, combinando com o fundo do conteúdo
-    const textColor = '#424242'; // Cinza escuro para o texto normal
-    const primaryColor = '#187bbd'; // Azul primário do seu tema
-    const hoverBg = '#e3f2fd'; // Um azul bem claro para o hover (ou '#f5f5f5' para cinza claro)
-    const iconColor = primaryColor; // Ícones na cor primária
+    const sidebarBg = '#ffffff'; 
+    const textColor = '#424242'; 
+    const primaryColor = '#187bbd'; 
+    const hoverBg = '#e3f2fd'; 
+    const iconColor = primaryColor; 
 
     return (
         <Box
@@ -48,19 +45,19 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                 flexShrink: 0,
                 position: 'fixed',
                 height: '100%',
-                bgcolor: sidebarBg, // Fundo branco
-                color: textColor, // Cor do texto principal
-                boxShadow: '4px 0 10px rgba(0, 0, 0, 0.05)', // Sombra mais sutil
+                bgcolor: sidebarBg, 
+                color: textColor, 
+                boxShadow: '4px 0 10px rgba(0, 0, 0, 0.05)', 
                 zIndex: 1200,
                 display: 'flex',
                 flexDirection: 'column',
-                borderRight: '1px solid #e0e0e0', // Borda sutil à direita
+                borderRight: '1px solid #e0e0e0', 
             }}
         >
             {/* 1. Logo/Título da Plataforma */}
             <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid #e0e0e0' }}>
                 <img src={SectorFlowLogo} alt="SectorFlow Logo" style={{ height: '100px' }} />
-                <Typography variant="h6" fontWeight="bold" sx={{ color: primaryColor }}> {/* Título com a cor primária */}
+                <Typography variant="h6" fontWeight="bold" sx={{ color: primaryColor }}> 
                      SectorFlow
                 </Typography>
                 <Typography variant="caption" color={textColor}>
@@ -77,12 +74,12 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                         onClick={() => navigate(item.path)}
                         sx={{
                             borderRadius: 1.5,
-                            '&:hover': { bgcolor: hoverBg }, // Cor de hover mais suave
+                            '&:hover': { bgcolor: hoverBg }, 
                             mb: 0.5
                         }}
                     >
                         <ListItemIcon>
-                            <item.icon sx={{ color: iconColor }} /> {/* Ícones na cor primária */}
+                            <item.icon sx={{ color: iconColor }} /> 
                         </ListItemIcon>
                         <ListItemText primary={<Typography variant="body2" sx={{ color: textColor }}>{item.name}</Typography>} />
                     </ListItem>
@@ -94,7 +91,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                 <Typography variant="body2" fontWeight="bold" noWrap sx={{ color: textColor }}>
                     {loggedUser?.name || 'Usuário'}
                 </Typography>
-                <Typography variant="caption" color="textSecondary" gutterBottom> {/* Usando textSecondary padrão do tema */}
+                <Typography variant="caption" color="textSecondary" gutterBottom> 
                     {userRole === 'ADMIN' ? 'Administrador' : (userRole || 'Função não definida')}
                 </Typography>
                 <Button
@@ -104,11 +101,11 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                     onClick={handleLogout}
                     sx={{
                         mt: 1,
-                        bgcolor: primaryColor, // Botão Sair com a cor primária
+                        bgcolor: primaryColor, 
                         color: 'white',
                         fontWeight: 'bold',
                         '&:hover': {
-                            bgcolor: '#1565c0', // Um tom mais escuro da cor primária no hover
+                            bgcolor: '#1565c0', 
                         },
                     }}
                 >
@@ -119,9 +116,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     );
 };
 
-// ----------------------------------------------------
 // COMPONENTE PRINCIPAL: Layout (O Hub)
-// ----------------------------------------------------
 function Layout({ loggedUser, setLoggedUser, children }) {
     const navigate = useNavigate();
     
@@ -134,7 +129,7 @@ function Layout({ loggedUser, setLoggedUser, children }) {
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa' }}> {/* Mantido o #fafafa */}
+        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa' }}> 
             <CssBaseline />
             
             <Sidebar

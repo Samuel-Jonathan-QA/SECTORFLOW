@@ -1,57 +1,49 @@
-// src/App.js (VERSÃO FINAL E CORRIGIDA COM LAYOUT)
+// src/App.js
 
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'; // 🚨 Adicionado useNavigate
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CircularProgress } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 
-// 🚨 NOVO: Importe a função setLogoutHandler do seu api.js
 import API, { logout, setLogoutHandler } from './api'; 
-// 🚨 NOVO: Importe o componente Layout 
 import Layout from './components/Layout';
 
-// 🚨 CORREÇÃO: Usando o nome ajustado (DashboardPage)
 import DashboardPage from './pages/DashboardPage';
 import SetoresPage from './pages/SetoresPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ProdutosPage from './pages/ProdutosPage';
 import Home from './pages/Home';
-import { ToastContainer, toast } from 'react-toastify'; // 🚨 Importado toast
+import { ToastContainer, toast } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// DEFINIÇÃO DO TEMA
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#187bbd', // Cor primária (azul SectorFlow)
+            main: '#187bbd', 
         },
         secondary: {
-            main: '#f44336', // Cor secundária
+            main: '#f44336', 
         },
     },
     typography: {
         fontFamily: 'Roboto, Arial, sans-serif',
     },
 });
-// FIM DA DEFINIÇÃO DO TEMA 
 
-// Componente Wrapper para obter acesso ao useNavigate
 function AppContent() {
-    const navigate = useNavigate(); // 🚨 useNavigate só pode ser chamado dentro do Router
+    const navigate = useNavigate(); 
 
     const [loggedUser, setLoggedUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Funções de logout/limpeza
     const performAppLogout = () => {
-        logout(); // Limpa LocalStorage e o header do Axios
+        logout();
         setLoggedUser(null);
-        toast.error("Sessão expirada. Faça login novamente."); // Mensagem de erro
-        navigate('/'); // 🚨 REDIRECIONAMENTO MANDATÓRIO PARA A TELA DE LOGIN
+        toast.error("Sessão expirada. Faça login novamente."); 
+        navigate('/'); 
     };
     
-    // 1. Lógica para persistência de Login (Existente)
     useEffect(() => {
         const storedUser = localStorage.getItem('loggedUser');
         if (storedUser) {
@@ -66,18 +58,13 @@ function AppContent() {
         setIsLoading(false);
     }, []);
     
-    // 🚨 2. NOVO: Injeção do Handler de Logout no Axios 🚨
     useEffect(() => {
-        // Isso permite que o interceptor no api.js chame performAppLogout()
-        // sempre que receber um erro 401.
         setLogoutHandler(performAppLogout);
-    }, [navigate]); // Dependência em navigate garante que a função de navegação esteja estável
+    }, [navigate]); 
     
-    // 3. Funções utilitárias para extrair dados do usuário
     const getUserRole = () => loggedUser?.role;
     const getUserSectorIds = () => loggedUser?.sectorIds || [];
 
-    // 4. Renderização Condicional
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -88,15 +75,11 @@ function AppContent() {
 
     return (
         <Routes>
-            {/* Rota de Login/Home (Não precisa do Layout) */}
             <Route
                 path="/"
                 element={<Home loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
             />
-
-            {/* 🎯 ROTAS PROTEGIDAS (ENVOLVIDAS PELO LAYOUT) 🎯 */}
             
-            {/* 1. Rota do Dashboard */}
             <Route
                 path="/dashboard"
                 element={
@@ -108,7 +91,6 @@ function AppContent() {
                 }
             />
 
-            {/* 2. Rota de Setores */}
             <Route
                 path="/sectors"
                 element={
@@ -120,7 +102,6 @@ function AppContent() {
                 }
             />
 
-            {/* 3. Rota de Usuários */}
             <Route
                 path="/users"
                 element={
@@ -132,7 +113,6 @@ function AppContent() {
                 }
             />
 
-            {/* 4. Rota de Produtos */}
             <Route
                 path="/products"
                 element={
@@ -148,13 +128,11 @@ function AppContent() {
                 }
             />
 
-            {/* Rota de fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
 }
 
-// Componente principal para incluir o BrowserRouter
 function App() {
     return (
         <ThemeProvider theme={theme}>

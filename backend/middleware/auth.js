@@ -1,29 +1,25 @@
-// backend/middleware/auth.js (EXEMPLO DE AJUSTE)
+// backend/middleware/auth.js
 
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Certifique-se de que o Model User está correto
-const Sector = require('../models/Sector'); // E o Model Sector
+const User = require('../models/User'); 
+const Sector = require('../models/Sector'); 
 
 const protect = async (req, res, next) => {
     let token;
 
-    // 1. Verifica se o token está presente no header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // Obtém o token do header
             token = req.headers.authorization.split(' ')[1];
 
-            // 2. Decodifica o token para obter o ID
             const decoded = jwt.verify(token, process.env.JWT_SECRET); 
 
-            // 🚨 3. BUSCA O USUÁRIO E INCLUI ROLE E SETORES 🚨
             const user = await User.findByPk(decoded.id, {
-                attributes: ['id', 'name', 'email', 'role'], // Seleciona atributos básicos e a ROLE
-                include: [{ // Inclui os setores vinculados (relacionamento N:N)
+                attributes: ['id', 'name', 'email', 'role'], 
+                include: [{ 
                     model: Sector,
-                    as: 'Sectors', // Usa o alias definido nas associações
+                    as: 'Sectors',
                     attributes: ['id', 'name'],
-                    through: { attributes: [] } // Não inclui os campos da tabela de junção
+                    through: { attributes: [] } 
                 }]
             });
 
@@ -31,11 +27,9 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ error: 'Não autorizado, usuário não encontrado.' });
             }
 
-            // 4. Anexa o usuário à requisição (apenas as informações que o middleware de permissão precisa)
             req.user = {
                 id: user.id,
                 role: user.role,
-                // Mapeia a lista de IDs de setores para fácil uso
                 sectorIds: user.Sectors.map(sector => sector.id) 
             };
 

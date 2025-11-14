@@ -10,7 +10,6 @@ import API from '../api';
 
 import ProductList from '../components/ProductList'; 
 
-// Importa ícones para os Cards
 import InventoryIcon from '@mui/icons-material/Inventory'; 
 import CategoryIcon from '@mui/icons-material/Category'; 
 import GroupIcon from '@mui/icons-material/Group'; 
@@ -23,7 +22,6 @@ function DashboardPage({ loggedUser }) {
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
 
-    // Busca dados de setores ativos da API
     const fetchSectors = useCallback(async () => {
         try {
             const res = await API.get('/sectors');
@@ -33,7 +31,6 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Busca a lista de usuários da API
     const fetchUsers = useCallback(async () => {
         try {
             const res = await API.get('/users');
@@ -43,7 +40,6 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Busca a lista de produtos da API
     const fetchProducts = useCallback(async () => {
         try {
             const res = await API.get('/products');
@@ -53,12 +49,9 @@ function DashboardPage({ loggedUser }) {
         }
     }, []);
 
-    // Extrai a role do usuário logado
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
 
-    // Carrega dados iniciais baseados na role
     useEffect(() => {
-        // ✅ CORREÇÃO: Chamando fetchSectors() para todos para que o ProductList possa exibir o nome do setor
         fetchSectors();
 
         if (userRole === 'ADMIN') {
@@ -69,7 +62,6 @@ function DashboardPage({ loggedUser }) {
         }
     }, [userRole, fetchSectors, fetchUsers, fetchProducts]);
 
-    // Calcula e formata o valor total dos produtos em estoque (BRL)
     const calculateStockValue = () => {
         const totalValue = products.reduce((acc, product) => {
             const price = parseFloat(product.price || 0);
@@ -88,7 +80,6 @@ function DashboardPage({ loggedUser }) {
     const totalStockValueFormatted = calculateStockValue();
 
 
-    // Define os cards de métricas no topo
     const baseCards = [
         { 
             label: 'Total de Produtos', 
@@ -98,7 +89,6 @@ function DashboardPage({ loggedUser }) {
             color: '#4caf50', 
             iconBg: '#e8f5e9' 
         },
-        // Cards de Setores e Usuários (apenas para ADMIN)
         ...(userRole === 'ADMIN' ? [
             { 
                 label: 'Total de Setores', 
@@ -129,7 +119,6 @@ function DashboardPage({ loggedUser }) {
         },
     ];
 
-    // Componente para renderizar um card de métrica individual
     const MetricCard = ({ card }) => {
         const renderCount = () => {
             const fontSize = card.isCurrency ? '1.5rem' : '1.5rem';
@@ -166,7 +155,6 @@ function DashboardPage({ loggedUser }) {
                     },
                 }}
             >
-                {/* Conteúdo do Card */}
                 <Box textAlign="left" sx={{ zIndex: 2 }}> 
                     <Typography variant="body2" color="textSecondary" fontWeight="medium">
                         {card.label}
@@ -174,7 +162,6 @@ function DashboardPage({ loggedUser }) {
                     {renderCount()}
                 </Box>
                 
-                {/* Ícone posicionado no canto superior direito */}
                 <Box sx={{
                     width: 80, height: 80, 
                     borderRadius: '50%', 
@@ -197,7 +184,6 @@ function DashboardPage({ loggedUser }) {
         );
     };
 
-    // Componente para exibir um item de setor na lista
     const SectorListItem = ({ sector }) => (
         <ListItem sx={{ px: 0 }}>
             <DescriptionIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20 }} />
@@ -207,17 +193,13 @@ function DashboardPage({ loggedUser }) {
         </ListItem>
     );
 
-    // Filtra os 4 produtos mais recentes
     const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-    // Filtra os 5 setores mais recentes/ativos
     const activeSectors = sectors.slice(0, 5);
 
 
-    // Lógica para visibilidade do painel de Setores (Oculto para VENDEDOR)
     const showSectorsPanel = userRole !== 'VENDEDOR';
     const productGridSize = showSectorsPanel ? 7 : 12; 
     
-    // Lógica: Saudação personalizada
     const firstName = loggedUser?.name ? loggedUser.name.split(' ')[0] : 'Usuário(a)';
     const greetingText = `Olá, ${firstName}!`;
 
@@ -225,12 +207,10 @@ function DashboardPage({ loggedUser }) {
     return (
         <Container maxWidth="xl" sx={{ pt: 3 }}>
             
-            {/* Bloco de Cabeçalho do Dashboard (Separado em Título e Saudação) */}
             <Box mb={2}>
                 <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                     Dashboard
                 </Typography>
-                {/* Subtítulo da Saudação, mais suave e amigável */}
                 <Typography variant="h6" color="textSecondary" fontWeight="regular" sx={{ mt: 0.5 }}>
                     {greetingText} — Veja suas métricas e atividades recentes.
                 </Typography>
@@ -238,7 +218,6 @@ function DashboardPage({ loggedUser }) {
 
             <Divider sx={{ mb: 4 }} />
 
-            {/* PRIMEIRA LINHA: CARDS DE MÉTRICAS */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 {baseCards.map((card) => (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={card.label}>
@@ -247,10 +226,8 @@ function DashboardPage({ loggedUser }) {
                 ))}
             </Grid>
 
-            {/* SEGUNDA LINHA: PRODUTOS RECENTES E SETORES ATIVOS */}
             <Grid container spacing={3}>
 
-                {/* Painel de Produtos Recentes */}
                 <Grid item xs={12} md={productGridSize}>
                     <Typography variant="h5" fontWeight="medium" gutterBottom>
                         Produtos Recentes
@@ -258,12 +235,10 @@ function DashboardPage({ loggedUser }) {
                     
                     <ProductList
                         products={latestProducts}
-                        sectors={sectors} // Agora a lista 'sectors' não estará vazia
+                        sectors={sectors} 
                         
-                        // Oculta campos de busca e filtro por setores
                         showControls={false} 
                         
-                        // Oculta os botões de ação (Edição/Exclusão)
                         hideActions={true} 
                         
                         height={410} 
@@ -271,7 +246,6 @@ function DashboardPage({ loggedUser }) {
 
                 </Grid>
 
-                {/* Painel de Setores Ativos (Oculto para VENDEDOR) */}
                 {showSectorsPanel && (
                     <Grid item xs={12} md={5}>
                         <Typography variant="h5" fontWeight="medium" gutterBottom>

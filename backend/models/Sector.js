@@ -1,7 +1,6 @@
 // backend/models/Sector.js
 
 const { DataTypes } = require('sequelize');
-// 🚨 CORREÇÃO: Desestrutura a instância 'sequelize' do objeto exportado 🚨
 const { sequelize } = require('../config/database'); 
 
 const Sector = sequelize.define('Sector', {
