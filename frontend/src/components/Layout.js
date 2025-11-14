@@ -1,14 +1,11 @@
-// frontend/src/components/Layout.js
-
 import React from 'react';
 import {
     Box, List, ListItem, ListItemText, ListItemIcon, Typography,
     Button, CssBaseline, Container, Divider 
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../api'; 
 
-// Ícones
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import InventoryIcon from '@mui/icons-material/Inventory'; 
@@ -18,8 +15,10 @@ import SectorFlowLogo from '../assets/logo1.png';
 
 const drawerWidth = 200;
 
-// SUBCOMPONENTE: Menu Lateral (Sidebar)
 const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
+    
+    const location = useLocation();
+    const currentPath = location.pathname;
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: DashboardIcon, roles: ['ADMIN', 'VENDEDOR', 'USER'] },
@@ -30,12 +29,13 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
         ] : []),
     ];
 
-    // Definindo cores para o menu lateral e seus elementos
     const sidebarBg = '#ffffff'; 
     const textColor = '#424242'; 
     const primaryColor = '#187bbd'; 
     const hoverBg = '#e3f2fd'; 
-    const iconColor = primaryColor; 
+    const activeBg = primaryColor + '20';
+    const activeIconColor = primaryColor;
+    const iconColor = primaryColor;
 
     return (
         <Box
@@ -54,39 +54,56 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                 borderRight: '1px solid #e0e0e0', 
             }}
         >
-            {/* 1. Logo/Título da Plataforma */}
             <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid #e0e0e0' }}>
                 <img src={SectorFlowLogo} alt="SectorFlow Logo" style={{ height: '100px' }} />
                 <Typography variant="h6" fontWeight="bold" sx={{ color: primaryColor }}> 
-                     SectorFlow
+                    SectorFlow
                 </Typography>
                 <Typography variant="caption" color={textColor}>
                     Gestão Setorizada
                 </Typography>
             </Box>
 
-            {/* 2. Lista de Navegação */}
             <List sx={{ flexGrow: 1, p: 1 }}>
-                {navItems.map((item) => (
-                    <ListItem
-                        button
-                        key={item.name}
-                        onClick={() => navigate(item.path)}
-                        sx={{
-                            borderRadius: 1.5,
-                            '&:hover': { bgcolor: hoverBg }, 
-                            mb: 0.5
-                        }}
-                    >
-                        <ListItemIcon>
-                            <item.icon sx={{ color: iconColor }} /> 
-                        </ListItemIcon>
-                        <ListItemText primary={<Typography variant="body2" sx={{ color: textColor }}>{item.name}</Typography>} />
-                    </ListItem>
-                ))}
+                {navItems.map((item) => {
+                    
+                    const isActive = currentPath === item.path;
+
+                    return (
+                        <ListItem
+                            button
+                            key={item.name}
+                            onClick={() => navigate(item.path)}
+                            sx={{
+                                borderRadius: 1.5,
+                                bgcolor: isActive ? activeBg : 'transparent',
+                                '&:hover': { 
+                                    bgcolor: isActive ? activeBg : hoverBg,
+                                }, 
+                                mb: 0.5
+                            }}
+                        >
+                            <ListItemIcon>
+                                <item.icon sx={{ color: isActive ? activeIconColor : iconColor }} /> 
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary={
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: isActive ? primaryColor : textColor,
+                                            fontWeight: isActive ? 'bold' : 'normal'
+                                        }}
+                                    >
+                                        {item.name}
+                                    </Typography>
+                                } 
+                            />
+                        </ListItem>
+                    );
+                })}
             </List>
 
-            {/* 3. Usuário e Logout */}
             <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
                 <Typography variant="body2" fontWeight="bold" noWrap sx={{ color: textColor }}>
                     {loggedUser?.name || 'Usuário'}
@@ -116,7 +133,6 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     );
 };
 
-// COMPONENTE PRINCIPAL: Layout (O Hub)
 function Layout({ loggedUser, setLoggedUser, children }) {
     const navigate = useNavigate();
     
