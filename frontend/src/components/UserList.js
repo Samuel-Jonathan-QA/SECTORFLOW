@@ -3,13 +3,12 @@ import {
     List, ListItem, ListItemText, Typography, Paper,
     IconButton, Box, Divider,
     TextField, FormControl, InputLabel, Select, MenuItem,
-    Grid, Avatar // 🛑 NOVO: Importamos Avatar
+    Grid, Avatar 
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-// 🛑 URL Base do Backend (Ajuste a porta se necessário)
 const BACKEND_URL = 'http://localhost:3001'; 
 
 function UserList({ 
@@ -61,7 +60,6 @@ function UserList({
             alignItems="center"
             minWidth={ACTIONS_WIDTH}
         >
-            {/* BOTÃO DE EDIÇÃO */}
             {onEdit && (
                 <IconButton
                     edge="end"
@@ -142,7 +140,6 @@ function UserList({
                         
                         const secondaryText = `Cargo: ${user.role} | ${user.email}`;
 
-                        // 🛑 Lógica para a foto de perfil: Se profilePicture existir, usamos o caminho completo do backend.
                         const profileSrc = user.profilePicture 
                             ? `${BACKEND_URL}${user.profilePicture}` 
                             : undefined;
@@ -153,7 +150,6 @@ function UserList({
                                     sx={{ py: 1.5, px: 2 }}
                                     secondaryAction={renderActions(user)}
                                 >
-                                    {/* 🛑 SUBSTITUIÇÃO: Ícone genérico por Avatar */}
                                     <Avatar 
                                         src={profileSrc} 
                                         sx={{ 
