@@ -56,9 +56,21 @@ const getOneUser = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    const { email, password, role, 'sectorIds[]': sectorIds, ...rest } = req.body; 
+    let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds; 
+    
+    const { email, password, role, ...rest } = req.body; 
     let transaction; 
 
+    let sectorIdArray = [];
+    if (sectorIdsRaw) {
+        const tempArray = Array.isArray(sectorIdsRaw) ? sectorIdsRaw : Array.of(sectorIdsRaw);
+        
+        // Limpa e mapeia os IDs
+        sectorIdArray = tempArray
+            .map(id => String(id).trim())
+            .filter(id => id.length > 0);
+    }
+    
     const profilePicturePath = req.file 
         ? `/uploads/profile_pictures/${req.file.filename}` 
         : null;
@@ -68,7 +80,7 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
     }
 
-    if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
+    if (role.toUpperCase() === 'VENDEDOR' && sectorIdArray.length === 0) {
         if (req.file) { removeOldProfilePicture(profilePicturePath); }
         return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
     }
@@ -84,8 +96,7 @@ const createUser = async (req, res) => {
             ...rest 
         }, { transaction }); 
 
-        if (sectorIds && sectorIds.length > 0) {
-            const sectorIdArray = Array.isArray(sectorIds) ? sectorIds : [sectorIds];
+        if (sectorIdArray.length > 0) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray } });
             await newUser.setSectors(sectors, { transaction }); 
         }
@@ -116,8 +127,11 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { password, 'sectorIds[]': sectorIds, profilePictureRemove, ...updateData } = req.body; 
+    
+    let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds; 
 
+    const { password, profilePictureRemove, ...updateData } = req.body; 
+    
     let transaction;
     
     const newFilePath = req.file 
@@ -152,17 +166,39 @@ const updateUser = async (req, res) => {
         
         updateData.profilePicture = profilePictureToSave;
 
+        const roleToCheck = updateData.role || userToUpdate.role;
+
+
+        let sectorIdArray = [];
+        let shouldValidateSector = false;
+
+        if (sectorIdsRaw !== undefined) { 
+            shouldValidateSector = true;
+            const tempArray = Array.isArray(sectorIdsRaw) ? sectorIdsRaw : Array.of(sectorIdsRaw);
+            
+            sectorIdArray = tempArray
+                .map(id => String(id).trim())
+                .filter(id => id.length > 0);
+        }
+        
+        if (roleToCheck.toUpperCase() === 'VENDEDOR' && shouldValidateSector && sectorIdArray.length === 0) {
+             if (req.file) { removeOldProfilePicture(newFilePath); }
+             await transaction.rollback();
+             return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
+        }
+
+
         const [updatedRows] = await User.update(updateData, { 
             where: { id },
             individualHooks: true,
             transaction
         });
         
-        if (sectorIds !== undefined) { 
-            const sectorIdArray = Array.isArray(sectorIds) ? sectorIds : [sectorIds];
+        if (sectorIdsRaw !== undefined) { 
             const sectors = await Sector.findAll({ where: { id: sectorIdArray }, transaction });
             await userToUpdate.setSectors(sectors, { transaction }); 
         }
+
 
         await transaction.commit();
 

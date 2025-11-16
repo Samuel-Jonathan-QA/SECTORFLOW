@@ -130,8 +130,7 @@ function UserList({
                 </Grid>
             </Box>
 
-            <Divider sx={{ mb: 2 }} />
-
+            <Divider/>
 
             <div style={{ height: `${LIST_HEIGHT}px`, overflowY: 'auto' }}>
                 <List disablePadding>
@@ -147,7 +146,7 @@ function UserList({
                         return (
                             <React.Fragment key={user.id}>
                                 <ListItem
-                                    sx={{ py: 1.5, px: 2 }}
+                                    sx={{ py: 1.0, px: 1 }}
                                     secondaryAction={renderActions(user)}
                                 >
                                     <Avatar 

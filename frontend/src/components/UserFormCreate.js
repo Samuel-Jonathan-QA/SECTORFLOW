@@ -1,3 +1,5 @@
+// frontend/src/components/UserForm.jsx
+
 import React, { useState, useEffect } from 'react';
 import {
     TextField,
@@ -96,7 +98,16 @@ function UserForm({ sectors, onFinish }) {
 
     const handleSectorChange = (event) => {
         const { target: { value } } = event;
-        setSectorIds(value);
+        const newSectorIds = Array.isArray(value)
+            ? value.map(id => {
+                if (typeof id === 'string') {
+                    return parseInt(id, 10);
+                }
+                return id;
+            })
+            : value;
+
+        setSectorIds(newSectorIds);
     };
 
     const handleFileChange = (e) => {
@@ -129,6 +140,7 @@ function UserForm({ sectors, onFinish }) {
 
         sectorIds.forEach(id => formData.append('sectorIds[]', id));
 
+
         if (profilePictureFile) {
             formData.append('profilePicture', profilePictureFile);
         } 
@@ -138,7 +150,8 @@ function UserForm({ sectors, onFinish }) {
             return;
         }
 
-        if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
+        // 🛑 A validação agora deve funcionar corretamente se sectorIds for um Array.
+        if (role.toUpperCase() === 'VENDEDOR' && (!Array.isArray(sectorIds) || sectorIds.length === 0)) {
             toast.error('Vendedores devem ser associados a pelo menos um setor.');
             return;
         }
@@ -154,6 +167,7 @@ function UserForm({ sectors, onFinish }) {
             clearForm();
             onFinish();
         } catch (error) {
+            // console.error(error);
             toast.error(error.response?.data?.error || 'Erro ao criar usuário.');
         }
     };
@@ -278,7 +292,10 @@ function UserForm({ sectors, onFinish }) {
                         input={<OutlinedInput id="select-multiple-chip" label="Setores" />}
                         renderValue={(selectedIds) => {
                             const selectedNames = sectors
-                                .filter(sector => selectedIds.includes(sector.id))
+                                .filter(sector => {
+                                    const idToCompare = typeof sector.id === 'string' ? parseInt(sector.id, 10) : sector.id;
+                                    return selectedIds.includes(idToCompare);
+                                })
                                 .map(sector => sector.name);
                             return selectedNames.join(', ');
                         }}
@@ -287,11 +304,11 @@ function UserForm({ sectors, onFinish }) {
                         {sectors.map(sector => (
                             <MenuItem
                                 key={sector.id}
-                                value={sector.id}
+                                value={sector.id} 
                                 dense
                             >
                                 <Checkbox
-                                    checked={sectorIds.indexOf(sector.id) > -1}
+                                    checked={sectorIds.includes(sector.id)} 
                                     size="small"
                                 />
                                 <ListItemText primary={sector.name} />

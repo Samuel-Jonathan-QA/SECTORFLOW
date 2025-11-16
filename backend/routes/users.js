@@ -40,8 +40,29 @@ const upload = multer({
 
 
 router.get('/', protect, checkRole(['ADMIN']), UserController.getAllUsers);
-router.post('/', protect, checkRole(['ADMIN']), upload.single('profilePicture'), UserController.createUser);
-router.put('/:id', protect, checkRole(['ADMIN']), upload.single('profilePicture'), UserController.updateUser);
+
+router.post(
+    '/', 
+    protect, 
+    checkRole(['ADMIN']), 
+    upload.fields([
+        { name: 'profilePicture', maxCount: 1 }, 
+        { name: 'sectorIds[]' } 
+    ]), 
+    UserController.createUser
+);
+
+router.put(
+    '/:id', 
+    protect, 
+    checkRole(['ADMIN']), 
+    upload.fields([
+        { name: 'profilePicture', maxCount: 1 }, 
+        { name: 'sectorIds[]' } 
+    ]), 
+    UserController.updateUser
+);
+
 router.delete('/:id', protect, checkRole(['ADMIN']), UserController.deleteUser);
 
 

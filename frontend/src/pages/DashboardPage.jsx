@@ -1,11 +1,9 @@
-// frontend/src/pages/DashboardPage.jsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Container, Grid, Paper, Typography, Box, Divider, 
     List, ListItem, ListItemText 
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; 
 import API from '../api'; 
 
 import ProductList from '../components/ProductList'; 
@@ -167,7 +165,7 @@ function DashboardPage({ loggedUser }) {
                     borderRadius: '50%', 
                     backgroundColor: card.iconBg,
                     position: 'absolute', 
-                    top: -15,  
+                    top: -15,  
                     right: -15, 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -200,9 +198,6 @@ function DashboardPage({ loggedUser }) {
     const showSectorsPanel = userRole !== 'VENDEDOR';
     const productGridSize = showSectorsPanel ? 7 : 12; 
     
-    const firstName = loggedUser?.name ? loggedUser.name.split(' ')[0] : 'Usuário(a)';
-    const greetingText = `Olá, ${firstName}!`;
-
 
     return (
         <Container maxWidth="xl" sx={{ pt: 3 }}>
@@ -212,7 +207,7 @@ function DashboardPage({ loggedUser }) {
                     Dashboard
                 </Typography>
                 <Typography variant="h6" color="textSecondary" fontWeight="regular" sx={{ mt: 0.5 }}>
-                    {greetingText} — Veja suas métricas e atividades recentes.
+                    Métricas e atividades recentes da sua gestão.
                 </Typography>
             </Box>
 
