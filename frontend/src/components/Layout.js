@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Box, List, ListItem, ListItemText, ListItemIcon, Typography,
-    Button, CssBaseline, Container, Divider 
+    Button, CssBaseline, Container, Divider, Avatar 
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../api'; 
@@ -11,9 +11,11 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import InventoryIcon from '@mui/icons-material/Inventory'; 
 import CategoryIcon from '@mui/icons-material/Category'; 
 import GroupIcon from '@mui/icons-material/Group'; 
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SectorFlowLogo from '../assets/logo1.png'; 
 
 const drawerWidth = 200;
+const BACKEND_URL = 'http://localhost:3001'; 
 
 const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     
@@ -133,6 +135,42 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     );
 };
 
+const UserHeader = ({ loggedUser }) => {
+    const profileSrc = loggedUser?.profilePicture 
+        ? `${BACKEND_URL}${loggedUser.profilePicture}` 
+        : undefined;
+    
+    const firstName = loggedUser?.name ? loggedUser.name.split(' ')[0] : 'Usuário';
+
+    return (
+        <Box 
+            sx={{
+                position: 'absolute', 
+                top: 15,
+                right: 30,
+                zIndex: 1000, 
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                cursor: 'pointer', 
+                p: 1,
+                borderRadius: 999,
+                '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                }
+            }}
+        >
+            <Avatar 
+                src={profileSrc} 
+                sx={{ width: 40, height: 40, bgcolor: '#bdbdbd', fontSize: 18 }}
+            >
+                {!loggedUser?.profilePicture && loggedUser?.name ? loggedUser.name[0].toUpperCase() : <AccountCircleIcon />}
+            </Avatar>
+        </Box>
+    );
+};
+
+
 function Layout({ loggedUser, setLoggedUser, children }) {
     const navigate = useNavigate();
     
@@ -160,10 +198,14 @@ function Layout({ loggedUser, setLoggedUser, children }) {
                 sx={{
                     flexGrow: 1,
                     ml: `${drawerWidth}px`,
-                    width: `calc(100% - ${drawerWidth}px)`
+                    width: `calc(100% - ${drawerWidth}px)`,
+                    position: 'relative', 
+                    pt: 8, 
                 }}
             >
-                <Container maxWidth="xl" sx={{ pt: 3, pb: 4 }}>
+                <UserHeader loggedUser={loggedUser} />
+
+                <Container maxWidth="xl" sx={{ pt: 0, pb: 4 }}>
                     {children}
                 </Container>
             </Box>
