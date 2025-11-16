@@ -19,6 +19,11 @@ const User = sequelize.define('User', {
         defaultValue: 'VENDEDOR',
         allowNull: false
     },
+    profilePicture: { 
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+    },
 }, {
     hooks: {
         beforeCreate: async (user) => {

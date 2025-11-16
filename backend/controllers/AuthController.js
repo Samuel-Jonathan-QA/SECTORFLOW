@@ -1,11 +1,8 @@
-// backend/controllers/AuthController.js
-
 const User = require('../models/User'); 
 const Sector = require('../models/Sector');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-
 
 const JWT_SECRET_DEV = 'uma_chave_secreta_muito_longa_e_unica_para_o_sectorflow';
 
@@ -41,7 +38,6 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            // Senha incorreta
             return res.status(401).json({ error: 'Credenciais inválidas.' });
         }
 
@@ -52,6 +48,7 @@ exports.login = async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
+            profilePicture: user.profilePicture,
             sectorIds: user.Sectors ? user.Sectors.map(s => s.id) : []
         };
 

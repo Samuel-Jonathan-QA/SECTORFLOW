@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    TextField, 
-    Button, 
-    MenuItem, 
-    Paper, 
-    FormControl, 
-    InputLabel, 
-    Select, 
+import {
+    TextField,
+    Button,
+    MenuItem,
+    Paper,
+    FormControl,
+    InputLabel,
+    Select,
     OutlinedInput,
-    Checkbox, 
+    Checkbox,
     Box,
     ListItemText,
-    Typography, 
-    Avatar, 
-    IconButton 
+    Typography,
+    Avatar,
+    IconButton
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete'; 
-import PersonIcon from '@mui/icons-material/Person'; 
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonIcon from '@mui/icons-material/Person';
 import API from '../api';
 import { toast } from 'react-toastify';
+
+const BACKEND_URL = 'http://localhost:3001';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 1;
@@ -31,68 +33,49 @@ const MenuProps = {
     },
 };
 
-function UserForm({ sectors, currentUser, onFinish }) { 
+function UserForm({ sectors, onFinish }) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [sectorIds, setSectorIds] = useState([]); 
+    const [sectorIds, setSectorIds] = useState([]);
     const [role, setRole] = useState('');
-    const [profilePictureFile, setProfilePictureFile] = useState(null); 
+    const [profilePictureFile, setProfilePictureFile] = useState(null);
     const [fileName, setFileName] = useState('');
     const [previewUrl, setPreviewUrl] = useState('');
-    const [isHovered, setIsHovered] = useState(false); 
-    
+    const [isHovered, setIsHovered] = useState(false);
+
     const roleOptions = [
         { value: 'ADMIN', label: 'Administrador' },
         { value: 'VENDEDOR', label: 'Vendedor' },
     ];
 
     useEffect(() => {
-        if (currentUser) {
-            setName(currentUser.name);
-            setEmail(currentUser.email);
-            setPassword(''); 
-            setRole(currentUser.role || '');
-            
-            setProfilePictureFile(null); 
-            if (currentUser.profilePicture) {
-                setFileName('Foto Atual');
-                setPreviewUrl(currentUser.profilePicture); 
-            } else {
-                setFileName('');
-                setPreviewUrl('');
-            }
-
-            const currentSectorIds = currentUser.Sectors 
-                ? currentUser.Sectors.map(s => s.id) 
-                : [];
-            setSectorIds(currentSectorIds);
-        } else {
-            setName('');
-            setEmail('');
-            setPassword('');
-            setSectorIds([]); 
-            setRole('');
-            setProfilePictureFile(null); 
-            setFileName('');
-            setPreviewUrl('');
-        }
-    }, [currentUser]); 
+        setName('');
+        setEmail('');
+        setPassword('');
+        setSectorIds([]);
+        setRole('');
+        setProfilePictureFile(null);
+        setFileName('');
+        setPreviewUrl('');
+    }, []);
 
     useEffect(() => {
-        if (!profilePictureFile) {
-            if (!currentUser?.profilePicture) {
-                setPreviewUrl('');
-            }
-            return;
+        let objectUrl;
+        
+        if (profilePictureFile) {
+            objectUrl = URL.createObjectURL(profilePictureFile);
+            setPreviewUrl(objectUrl);
+        } else {
+            setPreviewUrl('');
         }
-
-        const objectUrl = URL.createObjectURL(profilePictureFile);
-        setPreviewUrl(objectUrl);
-
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [profilePictureFile, currentUser]);
-
+        
+        return () => {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+    }, [profilePictureFile]);
 
     const clearForm = () => {
         setName('');
@@ -100,7 +83,7 @@ function UserForm({ sectors, currentUser, onFinish }) {
         setPassword('');
         setRole('');
         setSectorIds([]);
-        setProfilePictureFile(null); 
+        setProfilePictureFile(null);
         setFileName('');
         setPreviewUrl('');
     };
@@ -110,7 +93,7 @@ function UserForm({ sectors, currentUser, onFinish }) {
             setSectorIds([]);
         }
     }, [role]);
-    
+
     const handleSectorChange = (event) => {
         const { target: { value } } = event;
         setSectorIds(value);
@@ -126,36 +109,33 @@ function UserForm({ sectors, currentUser, onFinish }) {
             setFileName('');
         }
     };
-    
+
     const handleRemoveFile = () => {
-        setProfilePictureFile(null);
+        setProfilePictureFile(null); 
         setFileName('');
-        setPreviewUrl('');
+        setPreviewUrl(''); 
     };
 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const isEditing = !!currentUser;
+
         const formData = new FormData();
 
         formData.append('name', name);
         formData.append('email', email);
         formData.append('role', role);
         formData.append('password', password);
-        
+
         sectorIds.forEach(id => formData.append('sectorIds[]', id));
-        
+
         if (profilePictureFile) {
             formData.append('profilePicture', profilePictureFile);
-        } else if (isEditing && currentUser.profilePicture && !previewUrl) {
-            formData.append('profilePictureRemove', 'true');
-        }
-        
-        if (!name || !email || !role) {
+        } 
+
+        if (!name || !email || !role || !password) {
             toast.error('Preencha todos os campos obrigatórios.');
-            return; 
+            return;
         }
 
         if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
@@ -163,82 +143,62 @@ function UserForm({ sectors, currentUser, onFinish }) {
             return;
         }
 
-        if (!isEditing && !password) {
-            toast.error('A senha é obrigatória para criar um novo usuário.');
-            return;
-        }
-
         try {
             const config = {
-                 headers: { 'Content-Type': 'multipart/form-data' } 
+                headers: { 'Content-Type': 'multipart/form-data' }
             };
-            
-            if (isEditing) {
-                formData.delete('email'); 
-                
-                if (!password) {
-                    formData.delete('password');
-                }
 
-                await API.put(`/users/${currentUser.id}`, formData, config);
-                toast.success('Usuário atualizado com sucesso!');
-            } else {
-                await API.post('/users', formData, config);
-                toast.success('Usuário criado com sucesso!');
-                clearForm();
-            }
+            await API.post('/users', formData, config);
+            toast.success('Usuário criado com sucesso!');
+            
+            clearForm();
             onFinish();
         } catch (error) {
-            const defaultMessage = isEditing ? 'Erro ao atualizar usuário.' : 'Erro ao criar usuário.';
-            toast.error(error.response?.data?.error || defaultMessage); 
+            toast.error(error.response?.data?.error || 'Erro ao criar usuário.');
         }
     };
 
-    const submitButtonText = currentUser ? 'Salvar Edição' : 'Criar Usuário';
-    const passwordRequired = !currentUser;
+    const submitButtonText = 'Criar Usuário';
     const isAdmin = role.toUpperCase() === 'ADMIN';
     const hasImage = !!previewUrl; 
 
     return (
         <Paper elevation={3} style={{ padding: '10px' }} data-testid="user-form">
             <form onSubmit={handleSubmit}>
-                {/* ⭐️ MOVIDO PARA O TOPO E CENTRALIZADO */}
-                <Box 
-                    sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        mb: 3, // Margem inferior para separar dos campos
-                        mt: 1 // Margem superior
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        mb: 3,
+                        mt: 1
                     }}
                 >
-                    {/* PRÉ-VISUALIZAÇÃO DA IMAGEM / PLACEHOLDER */}
-                    <Box 
-                        sx={{ 
-                            display: 'inline-block', 
-                            position: 'relative', 
-                            mb: 1, // Margem abaixo do avatar para o texto
-                            borderRadius: '50%', // Garante que a caixa de hover também seja redonda
-                            overflow: 'hidden' // Garante que o conteúdo não vaze
+                    <Box
+                        sx={{
+                            display: 'inline-block',
+                            position: 'relative',
+                            mb: 1,
+                            borderRadius: '50%',
+                            overflow: 'hidden'
                         }}
-                        onMouseEnter={() => hasImage && setIsHovered(true)} 
-                        onMouseLeave={() => hasImage && setIsHovered(false)} 
+                        onMouseEnter={() => hasImage && setIsHovered(true)}
+                        onMouseLeave={() => hasImage && setIsHovered(false)}
                     >
-                        <Avatar 
-                            src={previewUrl} 
-                            alt="Foto de Perfil" 
-                            sx={{ 
-                                width: 80, 
-                                height: 80, 
-                                border: hasImage ? '1px solid #ccc' : '1px solid #666', 
-                                bgcolor: hasImage ? 'transparent' : 'grey.300', 
-                                color: hasImage ? 'inherit' : 'grey.600', 
-                            }} 
+                        <Avatar
+                            src={previewUrl.startsWith('/uploads') ? `${BACKEND_URL}${previewUrl}` : previewUrl}
+                            alt="Foto de Perfil"
+                            sx={{
+                                width: 80,
+                                height: 80,
+                                border: hasImage ? '1px solid #ccc' : '1px solid #666',
+                                bgcolor: hasImage ? 'transparent' : 'grey.300',
+                                color: hasImage ? 'inherit' : 'grey.600',
+                            }}
                         >
-                            {!hasImage && <PersonIcon sx={{ fontSize: 50 }} />} 
+                            {!hasImage && <PersonIcon sx={{ fontSize: 50 }} />}
                         </Avatar>
-                        
-                        {/* Overlay do botão de exclusão (Aparece somente se houver imagem) */}
+
                         {hasImage && (
                             <Box
                                 sx={{
@@ -251,29 +211,27 @@ function UserForm({ sectors, currentUser, onFinish }) {
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'center',
-                                    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
-                                    opacity: isHovered ? 1 : 0, 
-                                    transition: 'opacity 0.3s ease', 
+                                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                    opacity: isHovered ? 1 : 0,
+                                    transition: 'opacity 0.3s ease',
                                     cursor: 'pointer',
                                 }}
-                                onClick={handleRemoveFile} 
+                                onClick={handleRemoveFile}
                             >
                                 <DeleteIcon sx={{ color: 'white', fontSize: 30 }} />
                             </Box>
                         )}
                     </Box>
-                    
-                    {/* Campo de input real (oculto) */}
+
                     <input
                         accept="image/*"
                         style={{ display: 'none' }}
                         id="profile-picture-upload"
                         type="file"
                         onChange={handleFileChange}
-                        key={profilePictureFile} 
+                        key={'new-user-upload'}
                     />
-                    
-                    {/* Rótulo e botão visível */}
+
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                             Foto de Perfil (Opcional)
@@ -285,10 +243,9 @@ function UserForm({ sectors, currentUser, onFinish }) {
                         </label>
                     </Box>
                 </Box>
-                {/* ⭐️ FIM DO BLOCO DE SELEÇÃO DE FOTO */}
 
                 <TextField label="Nome" value={name} onChange={(e) => setName(e.target.value)} required fullWidth margin="normal" />
-                <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth margin="normal" />
+                <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth margin="normal" /> 
 
                 <TextField
                     select
@@ -305,12 +262,12 @@ function UserForm({ sectors, currentUser, onFinish }) {
                         </MenuItem>
                     ))}
                 </TextField>
-                
-                <FormControl 
-                    fullWidth 
-                    margin="normal" 
-                    required={!isAdmin} 
-                    disabled={isAdmin} 
+
+                <FormControl
+                    fullWidth
+                    margin="normal"
+                    required={!isAdmin}
+                    disabled={isAdmin}
                 >
                     <InputLabel id="sector-select-label">Setores</InputLabel>
                     <Select
@@ -328,14 +285,14 @@ function UserForm({ sectors, currentUser, onFinish }) {
                         MenuProps={MenuProps}
                     >
                         {sectors.map(sector => (
-                            <MenuItem 
-                                key={sector.id} 
+                            <MenuItem
+                                key={sector.id}
                                 value={sector.id}
                                 dense
-                            > 
-                                <Checkbox 
+                            >
+                                <Checkbox
                                     checked={sectorIds.indexOf(sector.id) > -1}
-                                    size="small" 
+                                    size="small"
                                 />
                                 <ListItemText primary={sector.name} />
                             </MenuItem>
@@ -343,16 +300,16 @@ function UserForm({ sectors, currentUser, onFinish }) {
                     </Select>
                 </FormControl>
 
-                <TextField 
-                    label={currentUser ? "Nova Senha (Opcional)" : "Senha"} 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required={passwordRequired} 
-                    fullWidth 
-                    margin="normal" 
+                <TextField
+                    label="Senha"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    fullWidth
+                    margin="normal"
                 />
-                
+
                 <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
                     {submitButtonText}
                 </Button>

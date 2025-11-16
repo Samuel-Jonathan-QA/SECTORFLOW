@@ -1,8 +1,27 @@
-// backend/controllers/UserController.js
-
-const User = require('../models/User');
+const User = require('../models/User'); 
 const Sector = require('../models/Sector'); 
-const bcrypt = require('bcryptjs');
+const { sequelize } = require('../config/database'); 
+
+const bcrypt = require('bcryptjs'); 
+const fs = require('fs');
+const path = require('path');
+
+
+const removeOldProfilePicture = (oldPath) => {
+    if (oldPath && oldPath.startsWith('/uploads/profile_pictures/')) {
+        const filename = path.basename(oldPath);
+        const filePath = path.join(__dirname, '..', 'uploads', 'profile_pictures', filename);
+        
+        try {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        } catch (err) {
+            console.error(`Erro ao remover arquivo: ${err.message}`);
+        }
+    }
+};
+
 
 const getAllUsers = async (req, res) => {
     try {
@@ -37,30 +56,56 @@ const getOneUser = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    const { email, password, role, sectorIds, ...rest } = req.body; 
+    const { email, password, role, 'sectorIds[]': sectorIds, ...rest } = req.body; 
+    let transaction; 
+
+    const profilePicturePath = req.file 
+        ? `/uploads/profile_pictures/${req.file.filename}` 
+        : null;
 
     if (!email || !password || !role) { 
+        if (req.file) { removeOldProfilePicture(profilePicturePath); }
         return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
     }
 
     if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
+        if (req.file) { removeOldProfilePicture(profilePicturePath); }
         return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
     }
 
     try {
-        const newUser = await User.create({ email, password, role, ...rest }); 
+        transaction = await sequelize.transaction();
+        
+        const newUser = await User.create({ 
+            email, 
+            password, 
+            role, 
+            profilePicture: profilePicturePath, 
+            ...rest 
+        }, { transaction }); 
 
         if (sectorIds && sectorIds.length > 0) {
-            await newUser.setSectors(sectorIds); 
+            const sectorIdArray = Array.isArray(sectorIds) ? sectorIds : [sectorIds];
+            const sectors = await Sector.findAll({ where: { id: sectorIdArray } });
+            await newUser.setSectors(sectors, { transaction }); 
         }
 
+        await transaction.commit();
+
         const userWithSectors = await User.findByPk(newUser.id, {
-             attributes: { exclude: ['password'] },
-             include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
+            attributes: { exclude: ['password'] },
+            include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
         });
         
         return res.status(201).json(userWithSectors); 
+
     } catch (error) {
+        if (transaction) await transaction.rollback(); 
+        
+        if (req.file) { 
+            removeOldProfilePicture(profilePicturePath); 
+        }
+
         if (error.name === 'SequelizeUniqueConstraintError') {
             return res.status(409).json({ error: 'O email fornecido já está em uso.' });
         }
@@ -71,36 +116,70 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { password, sectorIds, ...updateData } = req.body; 
+    const { password, 'sectorIds[]': sectorIds, profilePictureRemove, ...updateData } = req.body; 
+
+    let transaction;
+    
+    const newFilePath = req.file 
+        ? `/uploads/profile_pictures/${req.file.filename}` 
+        : null;
 
     try {
+        transaction = await sequelize.transaction();
+
+        const userToUpdate = await User.findByPk(id, { transaction });
+        
+        if (!userToUpdate) {
+            if (req.file) { removeOldProfilePicture(newFilePath); }
+            await transaction.rollback();
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
         if (password) {
             updateData.password = password; 
         }
+        
+        let profilePictureToSave = userToUpdate.profilePicture;
+
+        if (req.file) {
+            removeOldProfilePicture(userToUpdate.profilePicture);
+            profilePictureToSave = newFilePath;
+            
+        } else if (profilePictureRemove === 'true') {
+            removeOldProfilePicture(userToUpdate.profilePicture);
+            profilePictureToSave = null;
+        } 
+        
+        updateData.profilePicture = profilePictureToSave;
 
         const [updatedRows] = await User.update(updateData, { 
             where: { id },
-            individualHooks: true 
+            individualHooks: true,
+            transaction
         });
-
-        if (updatedRows === 0) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
-        }
         
-        const userToUpdate = await User.findByPk(id);
-
-        if (sectorIds !== undefined && userToUpdate) { 
-            await userToUpdate.setSectors(sectorIds); 
+        if (sectorIds !== undefined) { 
+            const sectorIdArray = Array.isArray(sectorIds) ? sectorIds : [sectorIds];
+            const sectors = await Sector.findAll({ where: { id: sectorIdArray }, transaction });
+            await userToUpdate.setSectors(sectors, { transaction }); 
         }
+
+        await transaction.commit();
 
         const updatedUser = await User.findByPk(id, {
-             attributes: { exclude: ['password'] },
-             include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
+            attributes: { exclude: ['password'] },
+            include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
         });
         
         return res.status(200).json(updatedUser);
 
     } catch (error) {
+        if (transaction) await transaction.rollback();
+        
+        if (req.file) { 
+             removeOldProfilePicture(newFilePath);
+        }
+
         console.error('Erro ao atualizar usuário:', error.message);
         return res.status(500).json({ error: 'Não foi possível atualizar o usuário.' });
     }
@@ -110,11 +189,16 @@ const deleteUser = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const deletedRows = await User.destroy({ where: { id } });
+        const userToDelete = await User.findByPk(id, { attributes: ['profilePicture'] });
 
-        if (deletedRows === 0) {
+        if (!userToDelete) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
+        
+        removeOldProfilePicture(userToDelete.profilePicture);
+
+        const deletedRows = await User.destroy({ where: { id } });
+
         return res.status(204).send(); 
     } catch (error) {
         console.error('Erro ao deletar usuário:', error.message);

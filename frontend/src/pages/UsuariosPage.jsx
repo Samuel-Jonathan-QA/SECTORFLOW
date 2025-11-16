@@ -1,8 +1,7 @@
-// frontend/src/pages/UsuariosPage.jsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Button, Box, Paper, Divider } from '@mui/material';
-import UserForm from '../components/UserForm';
+import UserForm from '../components/UserFormCreate';
+import UserEditForm from '../components/UserFormEdit';
 import UserList from '../components/UserList';
 import API from '../api';
 import { toast } from 'react-toastify';
@@ -69,7 +68,7 @@ function UsuariosPage({ userRole }) {
     const handleCloseModal = () => {
         setOpenModal(false);
         setEditingUser(null);
-        fetchUsers(); 
+        fetchUsers();
     };
 
     if (!canManageUsers) {
@@ -94,7 +93,6 @@ function UsuariosPage({ userRole }) {
                     <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
                         Gerenciamento de Usuários
                     </Typography>
-                   
                 </Box>
 
                 <Divider sx={{ mb: 4 }} />
@@ -105,6 +103,7 @@ function UsuariosPage({ userRole }) {
                             Criar Novo Usuário
                         </Typography>
                         <UserForm
+                            key={openModal ? 'creation-form-hidden' : 'creation-form-active'}
                             sectors={sectors}
                             onFinish={handleCloseModal}
                         />
@@ -119,7 +118,6 @@ function UsuariosPage({ userRole }) {
                             onDelete={handleDeleteUser}
                             onEdit={handleEditClick}
                         />
-                       
                     </Grid>
                 </Grid>
 
@@ -128,11 +126,14 @@ function UsuariosPage({ userRole }) {
                         {editingUser ? 'Editar Usuário' : 'Criar Usuário'}
                     </DialogTitle>
                     <DialogContent>
-                        <UserForm
-                            sectors={sectors}
-                            currentUser={editingUser}
-                            onFinish={handleCloseModal}
-                        />
+                        {editingUser && (
+                            <UserEditForm
+                                key={editingUser.id}
+                                sectors={sectors}
+                                currentUser={editingUser}
+                                onFinish={handleCloseModal}
+                            />
+                        )}
                     </DialogContent>
                 </Dialog>
             </Container>

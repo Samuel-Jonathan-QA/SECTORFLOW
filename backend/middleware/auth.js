@@ -4,17 +4,25 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User'); 
 const Sector = require('../models/Sector'); 
 
+const JWT_SECRET_DEV = 'uma_chave_secreta_muito_longa_e_unica_para_o_sectorflow';
+
 const protect = async (req, res, next) => {
     let token;
+
+    const secret = process.env.JWT_SECRET || JWT_SECRET_DEV;
+            
+    if (!secret) {
+        return res.status(500).json({ error: 'Erro de configuração: JWT secret não definido.' });
+    }
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET); 
+            const decoded = jwt.verify(token, secret); 
 
             const user = await User.findByPk(decoded.id, {
-                attributes: ['id', 'name', 'email', 'role'], 
+                attributes: ['id', 'name', 'email', 'role', 'profilePicture'], 
                 include: [{ 
                     model: Sector,
                     as: 'Sectors',
@@ -30,6 +38,7 @@ const protect = async (req, res, next) => {
             req.user = {
                 id: user.id,
                 role: user.role,
+                profilePicture: user.profilePicture, 
                 sectorIds: user.Sectors.map(sector => sector.id) 
             };
 
