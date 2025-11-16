@@ -1,15 +1,16 @@
-// frontend/src/components/UserList.jsx
-
 import React, { useState, useMemo } from 'react';
 import { 
     List, ListItem, ListItemText, Typography, Paper,
     IconButton, Box, Divider,
     TextField, FormControl, InputLabel, Select, MenuItem,
-    Grid
+    Grid, Avatar // 🛑 NOVO: Importamos Avatar
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+
+// 🛑 URL Base do Backend (Ajuste a porta se necessário)
+const BACKEND_URL = 'http://localhost:3001'; 
 
 function UserList({ 
     users = [], 
@@ -141,6 +142,10 @@ function UserList({
                         
                         const secondaryText = `Cargo: ${user.role} | ${user.email}`;
 
+                        // 🛑 Lógica para a foto de perfil: Se profilePicture existir, usamos o caminho completo do backend.
+                        const profileSrc = user.profilePicture 
+                            ? `${BACKEND_URL}${user.profilePicture}` 
+                            : undefined;
 
                         return (
                             <React.Fragment key={user.id}>
@@ -148,7 +153,21 @@ function UserList({
                                     sx={{ py: 1.5, px: 2 }}
                                     secondaryAction={renderActions(user)}
                                 >
-                                    <AccountCircleIcon sx={{ color: '#bdbdbd', mr: 2, fontSize: 20, flexShrink: 0 }} />
+                                    {/* 🛑 SUBSTITUIÇÃO: Ícone genérico por Avatar */}
+                                    <Avatar 
+                                        src={profileSrc} 
+                                        sx={{ 
+                                            bgcolor: user.profilePicture ? 'transparent' : '#bdbdbd', 
+                                            color: 'white', 
+                                            mr: 2, 
+                                            width: 30, 
+                                            height: 30, 
+                                            fontSize: 16,
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        {!user.profilePicture && user.name ? user.name[0].toUpperCase() : <AccountCircleIcon />}
+                                    </Avatar>
                                     
                                     <ListItemText
                                         primary={
