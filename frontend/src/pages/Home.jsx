@@ -29,8 +29,9 @@ function UserLogin({ setLoggedUser }) {
             navigate('/dashboard');
 
         } catch (error) {
+            // Este bloco captura erros 400 (Credenciais inválidas) ou outros
             console.error('Erro de login:', error.response?.data || error);
-            toast.error(error.response?.data?.message || 'Erro de autenticação. Verifique suas credenciais.');
+            toast.error(error.response?.data?.error || 'Erro de autenticação. Verifique suas credenciais.');
         }
     };
 
@@ -112,11 +113,14 @@ function UserLogin({ setLoggedUser }) {
 function Home({ loggedUser, setLoggedUser }) { 
     const navigate = useNavigate();
 
-    const localHandleLogout = () => {
-        localStorage.removeItem('loggedUser');
-        setLoggedUser(null);
-        navigate('/'); 
-    };
+    // ✅ IMPLEMENTAÇÃO DO REDIRECIONAMENTO IMEDIATO
+    if (loggedUser) {
+        // Se o usuário estiver logado, redireciona para a dashboard e para de renderizar este componente.
+        navigate('/dashboard');
+        return null;
+    }
+
+    // Se a função localHandleLogout era usada apenas no bloco que removemos, ela não é mais necessária aqui.
 
     return (
         <Box
@@ -139,42 +143,8 @@ function Home({ loggedUser, setLoggedUser }) {
                     boxShadow: 'none', 
                 }}
             >
-
-                {loggedUser ? (
-                    <Box 
-                        sx={{ 
-                            mt: 4, 
-                            p: 5, // Mais padding
-                            bgcolor: 'rgba(255, 255, 255, 0.95)', 
-                            borderRadius: '12px',
-                            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.1)',
-                        }}
-                    >
-                        <Typography variant="h5" color="primary" sx={{ marginBottom: '20px' }}>
-                            Olá, {loggedUser.name} ({loggedUser.role})!
-                        </Typography>
-
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => navigate('/dashboard')}
-                            sx={{ mr: 2, mb: 2 }}
-                        >
-                            Ir para Dashboard
-                        </Button>
-
-                        <Button
-                            variant="outlined" 
-                            color="error"
-                            onClick={localHandleLogout}
-                            sx={{ mb: 2 }}
-                        >
-                            Sair / Deslogar
-                        </Button>
-                    </Box>
-                ) : (
-                    <UserLogin setLoggedUser={setLoggedUser} />
-                )}
+                {/* Se chegarmos até aqui, loggedUser é null, então exibimos o login */}
+                <UserLogin setLoggedUser={setLoggedUser} />
             </Container>
         </Box>
     );

@@ -1,5 +1,3 @@
-// src/App.js
-
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, CircularProgress } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -16,6 +14,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotFoundRedirect from './components/NotFoundRedirect'; 
 
 const theme = createTheme({
     palette: {
@@ -94,7 +93,8 @@ function AppContent() {
             <Route
                 path="/sectors"
                 element={
-                    <ProtectedRoute loggedUser={loggedUser}>
+                    // ✅ Restrição: Apenas 'ADMIN' pode acessar. Outros vão para /dashboard.
+                    <ProtectedRoute loggedUser={loggedUser} allowedRoles={['ADMIN']}>
                         <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
                             <SetoresPage userRole={getUserRole()} />
                         </Layout>
@@ -105,7 +105,8 @@ function AppContent() {
             <Route
                 path="/users"
                 element={
-                    <ProtectedRoute loggedUser={loggedUser}>
+                    // ✅ Restrição: Apenas 'ADMIN' pode acessar. Outros vão para /dashboard.
+                    <ProtectedRoute loggedUser={loggedUser} allowedRoles={['ADMIN']}>
                         <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
                             <UsuariosPage userRole={getUserRole()} />
                         </Layout>
@@ -128,7 +129,7 @@ function AppContent() {
                 }
             />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundRedirect loggedUser={loggedUser} />} />
         </Routes>
     );
 }

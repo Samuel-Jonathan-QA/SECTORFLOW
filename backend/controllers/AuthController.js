@@ -20,29 +20,33 @@ const generateToken = (id) => {
 
 exports.login = async (req, res) => {
     const { email, password } = req.body;
-
-    if (!email || !password) {
+    
+    const lowerCaseEmail = email ? email.trim().toLowerCase() : email; 
+    
+    if (!lowerCaseEmail || !password) {
         return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
     }
 
     try {
         const user = await User.scope('withPassword').findOne({
-            where: { email },
+            where: { email: lowerCaseEmail }, 
             include: [{ model: Sector, as: 'Sectors', attributes: ['id'] }]
         });
 
         if (!user) {
-            return res.status(401).json({ error: 'Credenciais inválidas.' });
+            return res.status(400).json({ error: 'Credenciais inválidas.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.status(401).json({ error: 'Credenciais inválidas.' });
+            // Usa 400 (Bad Request) para falha de login (senha incorreta)
+            return res.status(400).json({ error: 'Credenciais inválidas.' });
         }
 
         const token = generateToken(user.id);
 
+        // Remove a senha do objeto de retorno por segurança
         const userToReturn = {
             id: user.id,
             name: user.name,
