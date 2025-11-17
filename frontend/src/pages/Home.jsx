@@ -1,6 +1,6 @@
 // frontend/src/pages/Home.js
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { 
     Container, Typography, Button, Box, 
@@ -26,10 +26,9 @@ function UserLogin({ setLoggedUser }) {
             setLoggedUser(loggedUserObject);
             localStorage.setItem('loggedUser', JSON.stringify(loggedUserObject));
             toast.success(`Bem-vindo, ${user.name}!`);
-            navigate('/dashboard');
+            navigate('/dashboard', { replace: true }); 
 
         } catch (error) {
-            // Este bloco captura erros 400 (Credenciais inválidas) ou outros
             console.error('Erro de login:', error.response?.data || error);
             toast.error(error.response?.data?.error || 'Erro de autenticação. Verifique suas credenciais.');
         }
@@ -113,14 +112,19 @@ function UserLogin({ setLoggedUser }) {
 function Home({ loggedUser, setLoggedUser }) { 
     const navigate = useNavigate();
 
-    // ✅ IMPLEMENTAÇÃO DO REDIRECIONAMENTO IMEDIATO
+    // ✅ CORREÇÃO: Usar useEffect para o redirecionamento
+    useEffect(() => {
+        if (loggedUser) {
+            // Se o usuário estiver logado no estado, redireciona para a dashboard
+            navigate('/dashboard', { replace: true });
+        }
+    }, [loggedUser, navigate]);
+    
+    // Exibe um indicador rápido se estiver prestes a redirecionar
     if (loggedUser) {
-        // Se o usuário estiver logado, redireciona para a dashboard e para de renderizar este componente.
-        navigate('/dashboard');
-        return null;
+        return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography>Redirecionando...</Typography></Box>;
     }
 
-    // Se a função localHandleLogout era usada apenas no bloco que removemos, ela não é mais necessária aqui.
 
     return (
         <Box
@@ -143,7 +147,6 @@ function Home({ loggedUser, setLoggedUser }) {
                     boxShadow: 'none', 
                 }}
             >
-                {/* Se chegarmos até aqui, loggedUser é null, então exibimos o login */}
                 <UserLogin setLoggedUser={setLoggedUser} />
             </Container>
         </Box>

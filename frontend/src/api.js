@@ -1,5 +1,3 @@
-// frontend/src/api.js
-
 import axios from 'axios';
 
 const api = axios.create({
@@ -13,6 +11,13 @@ let onUnauthenticatedError = () => {};
  */
 export const setLogoutHandler = (handler) => {
     onUnauthenticatedError = handler;
+};
+
+// ✅ FUNÇÃO DE LOGOUT REVISADA
+export const logout = () => {
+    localStorage.removeItem('loggedUser');
+    // Adiciona uma limpeza genérica, caso o token seja guardado separadamente em algum momento.
+    localStorage.removeItem('token'); 
 };
 
 api.interceptors.request.use((config) => {
@@ -43,21 +48,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // ✅ Ação 401: Chamando a função de logout do App.js
         if (error.response && error.response.status === 401) {
-            console.warn('Sessão expirada (401). Redirecionando para login...');
-            
-            onUnauthenticatedError(); 
-
-            return new Promise(() => {}); 
+            console.warn('Sessão expirada (401). Forçando o logout...');
+            onUnauthenticatedError(); // Chama performAppLogout()
         }
+        
+        // Retorna a promessa rejeitada para o bloco catch do componente
         return Promise.reject(error);
     }
 );
-
-export const logout = () => {
-    localStorage.removeItem('loggedUser');
-
-    delete api.defaults.headers.common['Authorization'];
-};
 
 export default api;

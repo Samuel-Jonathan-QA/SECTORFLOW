@@ -37,33 +37,55 @@ function AppContent() {
     const [isLoading, setIsLoading] = useState(true);
 
     const performAppLogout = () => {
+        // Limpa o localStorage e o estado local
         logout();
         setLoggedUser(null);
         toast.error("Sessão expirada. Faça login novamente."); 
-        navigate('/'); 
+        // ✅ Garante que a navegação para / é a última entrada no histórico
+        navigate('/', { replace: true }); 
     };
     
-    useEffect(() => {
-        const storedUser = localStorage.getItem('loggedUser');
-        if (storedUser) {
-            try {
-                const userObject = JSON.parse(storedUser);
-                setLoggedUser(userObject);
-            } catch (e) {
-                console.error("Erro ao carregar usuário do localStorage:", e);
-                localStorage.removeItem('loggedUser');
-            }
-        }
-        setIsLoading(false);
-    }, []);
-    
+    // 1. Configura o handler de logout (usado pelo Interceptor 401 no api.js)
     useEffect(() => {
         setLogoutHandler(performAppLogout);
     }, [navigate]); 
     
+    // 2. ✅ Lógica principal: Carrega E VALIDA a sessão
+    useEffect(() => {
+        const validateSessionAndLoadUser = async () => {
+            const storedUser = localStorage.getItem('loggedUser');
+            
+            if (storedUser) {
+                try {
+                    const userObject = JSON.parse(storedUser);
+                    
+                    // Tenta fazer uma requisição protegida.
+                    // Se o servidor foi reiniciado, ele vai responder com 401 e o interceptor chamará performAppLogout.
+                    await API.get('/products'); 
+
+                    // ✅ Se chegou aqui, o token é válido: setamos o usuário.
+                    setLoggedUser(userObject);
+                    
+                } catch (error) {
+                    // Se falhou (401, 500 ou erro de rede), forçamos o logout.
+                    console.error("Falha na validação inicial da sessão. Forçando logout.", error);
+                    performAppLogout();
+                }
+            }
+            
+            // ✅ Importante: Libera a tela de loading SOMENTE após a checagem assíncrona.
+            setIsLoading(false); 
+        };
+        
+        validateSessionAndLoadUser();
+
+    }, []); 
+    
+    
     const getUserRole = () => loggedUser?.role;
     const getUserSectorIds = () => loggedUser?.sectorIds || [];
 
+    // Se estiver carregando, mostra o CircularProgress e EVITA renderizar rotas
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -93,7 +115,6 @@ function AppContent() {
             <Route
                 path="/sectors"
                 element={
-                    // ✅ Restrição: Apenas 'ADMIN' pode acessar. Outros vão para /dashboard.
                     <ProtectedRoute loggedUser={loggedUser} allowedRoles={['ADMIN']}>
                         <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
                             <SetoresPage userRole={getUserRole()} />
@@ -105,7 +126,6 @@ function AppContent() {
             <Route
                 path="/users"
                 element={
-                    // ✅ Restrição: Apenas 'ADMIN' pode acessar. Outros vão para /dashboard.
                     <ProtectedRoute loggedUser={loggedUser} allowedRoles={['ADMIN']}>
                         <Layout loggedUser={loggedUser} setLoggedUser={setLoggedUser}>
                             <UsuariosPage userRole={getUserRole()} />
