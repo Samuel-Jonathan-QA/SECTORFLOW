@@ -4,23 +4,23 @@ import {
     Button, CssBaseline, Container, Divider, Avatar, AppBar, Toolbar
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logout } from '../api'; 
+import { logout } from '../api';
 
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import InventoryIcon from '@mui/icons-material/Inventory'; 
-import CategoryIcon from '@mui/icons-material/Category'; 
-import GroupIcon from '@mui/icons-material/Group'; 
+import InventoryIcon from '@mui/icons-material/Inventory';
+import CategoryIcon from '@mui/icons-material/Category';
+import GroupIcon from '@mui/icons-material/Group';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import SectorFlowLogo from '../assets/logo1.png'; 
+import SectorFlowLogo from '../assets/logo1.png';
 
 const drawerWidth = 200;
-const HEADER_HEIGHT = 64; 
-const BACKEND_URL = 'http://localhost:3001'; 
-const primaryColor = '#187bbd'; 
+const HEADER_HEIGHT = 64;
+const BACKEND_URL = 'http://localhost:3001';
+const primaryColor = '#187bbd';
 
 const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
-    
+
     const location = useLocation();
     const currentPath = location.pathname;
 
@@ -33,9 +33,9 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
         ] : []),
     ];
 
-    const sidebarBg = '#ffffff'; 
-    const textColor = '#424242'; 
-    const hoverBg = '#e3f2fd'; 
+    const sidebarBg = '#ffffff';
+    const textColor = '#424242';
+    const hoverBg = '#e3f2fd';
     const activeBg = primaryColor + '20';
     const activeIconColor = primaryColor;
     const iconColor = primaryColor;
@@ -48,18 +48,18 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                 flexShrink: 0,
                 position: 'fixed',
                 height: '100%',
-                bgcolor: sidebarBg, 
-                color: textColor, 
-                boxShadow: '4px 0 10px rgba(0, 0, 0, 0.05)', 
+                bgcolor: sidebarBg,
+                color: textColor,
+                boxShadow: '4px 0 10px rgba(0, 0, 0, 0.05)',
                 zIndex: 1200,
                 display: 'flex',
                 flexDirection: 'column',
-                borderRight: '1px solid #e0e0e0', 
+                borderRight: '1px solid #e0e0e0',
             }}
         >
             <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid #e0e0e0' }}>
                 <img src={SectorFlowLogo} alt="SectorFlow Logo" style={{ height: '100px' }} />
-                <Typography variant="h6" fontWeight="bold" sx={{ color: primaryColor }}> 
+                <Typography variant="h6" fontWeight="bold" sx={{ color: primaryColor }}>
                     SectorFlow
                 </Typography>
                 <Typography variant="caption" color={textColor}>
@@ -69,7 +69,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
 
             <List sx={{ flexGrow: 1, p: 1 }}>
                 {navItems.map((item) => {
-                    
+
                     const isActive = currentPath === item.path;
 
                     return (
@@ -80,27 +80,27 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                             sx={{
                                 borderRadius: 1.5,
                                 bgcolor: isActive ? activeBg : 'transparent',
-                                '&:hover': { 
+                                '&:hover': {
                                     bgcolor: isActive ? activeBg : hoverBg,
-                                }, 
+                                },
                                 mb: 0.5
                             }}
                         >
                             <ListItemIcon>
-                                <item.icon sx={{ color: isActive ? activeIconColor : iconColor }} /> 
+                                <item.icon sx={{ color: isActive ? activeIconColor : iconColor }} />
                             </ListItemIcon>
-                            <ListItemText 
+                            <ListItemText
                                 primary={
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
                                             color: isActive ? primaryColor : textColor,
                                             fontWeight: isActive ? 'bold' : 'normal'
                                         }}
                                     >
                                         {item.name}
                                     </Typography>
-                                } 
+                                }
                             />
                         </ListItem>
                     );
@@ -111,7 +111,7 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                 <Typography variant="body2" fontWeight="bold" noWrap sx={{ color: textColor }}>
                     {loggedUser?.name || 'Usuário'}
                 </Typography>
-                <Typography variant="caption" color="textSecondary" gutterBottom> 
+                <Typography variant="caption" color="textSecondary" gutterBottom>
                     {userRole === 'ADMIN' ? 'Administrador' : (userRole || 'Função não definida')}
                 </Typography>
                 <Button
@@ -121,11 +121,11 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
                     onClick={handleLogout}
                     sx={{
                         mt: 1,
-                        bgcolor: primaryColor, 
+                        bgcolor: primaryColor,
                         color: 'white',
                         fontWeight: 'bold',
                         '&:hover': {
-                            bgcolor: '#1565c0', 
+                            bgcolor: '#1565c0',
                         },
                     }}
                 >
@@ -136,30 +136,54 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     );
 };
 
-const FixedHeader = ({ loggedUser }) => {
-    const profileSrc = loggedUser?.profilePicture 
-        ? `${BACKEND_URL}${loggedUser.profilePicture}` 
+const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle }) => {
+    const profileSrc = loggedUser?.profilePicture
+        ? `${BACKEND_URL}${loggedUser.profilePicture}`
         : undefined;
-    
+
     return (
         <AppBar
-            position="fixed" 
-            sx={{ 
-                width: `calc(100% - ${drawerWidth}px)`, // Ajusta a largura para não cobrir a Sidebar
-                ml: `${drawerWidth}px`, // Empurra para o lado da Sidebar
+            position="fixed"
+            sx={{
+                width: `calc(100% - ${drawerWidth}px)`,
+                ml: `${drawerWidth}px`,
                 height: HEADER_HEIGHT,
-                bgcolor: '#ffffff', // Fundo branco
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)', // Sombra leve
-                zIndex: 1100, // Abaixo da Sidebar (1200)
+                bgcolor: '#ffffff',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                zIndex: 1100,
             }}
         >
-            <Toolbar sx={{ justifyContent: 'flex-end', minHeight: HEADER_HEIGHT }}>
-                <Box 
+            <Toolbar sx={{ justifyContent: 'space-between', minHeight: HEADER_HEIGHT }}>
+
+                {/* 🚀 Título e Subtítulo da Página (Ajustado) */}
+                <Box>
+                    <Typography
+                        // ✅ Aumentado para 'h5' para mais destaque
+                        variant="h5"
+                        fontWeight="bold"
+                        // ✅ Aumentado para 1.4rem (ou mantenha h5 para usar o tamanho padrão do tema)
+                        sx={{ color: '#424242', lineHeight: 1.2, fontSize: '1.4rem' }}
+                    >
+                        {pageTitle}
+                    </Typography>
+                    {pageSubtitle && (
+                        <Typography
+                            // ✅ Aumentado para 'body2' para ser mais legível que 'caption'
+                            variant="body2"
+                            color="textSecondary"
+                        >
+                            {pageSubtitle}
+                        </Typography>
+                    )}
+                </Box>
+
+                {/* Informações do Usuário (Direita) */}
+                <Box
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
-                        cursor: 'pointer', 
+                        cursor: 'pointer',
                         p: 1,
                         borderRadius: 999,
                         '&:hover': {
@@ -170,8 +194,8 @@ const FixedHeader = ({ loggedUser }) => {
                     <Typography variant="body2" fontWeight="medium" sx={{ color: '#424242' }}>
                         Olá, {loggedUser?.name ? loggedUser.name.split(' ')[0] : 'Usuário'}
                     </Typography>
-                    <Avatar 
-                        src={profileSrc} 
+                    <Avatar
+                        src={profileSrc}
                         sx={{ width: 40, height: 40, bgcolor: primaryColor, fontSize: 18 }}
                     >
                         {!loggedUser?.profilePicture && loggedUser?.name ? loggedUser.name[0].toUpperCase() : <AccountCircleIcon sx={{ color: '#ffffff' }} />}
@@ -183,9 +207,10 @@ const FixedHeader = ({ loggedUser }) => {
 };
 
 
-function Layout({ loggedUser, setLoggedUser, children }) {
+// Layout recebe pageTitle e pageSubtitle
+function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }) {
     const navigate = useNavigate();
-    
+
     const handleLogout = () => {
         logout();
         setLoggedUser(null);
@@ -195,9 +220,9 @@ function Layout({ loggedUser, setLoggedUser, children }) {
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa' }}> 
+        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa' }}>
             <CssBaseline />
-            
+
             <Sidebar
                 userRole={userRole}
                 loggedUser={loggedUser}
@@ -205,7 +230,12 @@ function Layout({ loggedUser, setLoggedUser, children }) {
                 navigate={navigate}
             />
 
-            <FixedHeader loggedUser={loggedUser} /> 
+            {/* Passa pageTitle e pageSubtitle para o FixedHeader */}
+            <FixedHeader
+                loggedUser={loggedUser}
+                pageTitle={pageTitle}
+                pageSubtitle={pageSubtitle}
+            />
 
             <Box
                 component="main"
@@ -213,13 +243,15 @@ function Layout({ loggedUser, setLoggedUser, children }) {
                     flexGrow: 1,
                     ml: `${drawerWidth}px`,
                     width: `calc(100% - ${drawerWidth}px)`,
-                    pt: `${HEADER_HEIGHT + 16}px`, 
-                    pb: 4, 
-                    position: 'relative', 
+                    // O pt garante que o conteúdo não fique escondido atrás do header fixo
+                    pt: `${HEADER_HEIGHT + 24}px`,
+                    pb: 4,
+                    position: 'relative',
                 }}
             >
 
-                <Container maxWidth="xl" sx={{ pt: 0, pb: 0 }}> 
+                <Container maxWidth="xl" sx={{ pt: 0, pb: 0 }}>
+                    {/* O children agora é renderizado logo abaixo do espaço reservado pelo header */}
                     {children}
                 </Container>
             </Box>

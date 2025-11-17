@@ -201,15 +201,6 @@ function DashboardPage({ loggedUser }) {
 
     return (
         <Container maxWidth="xl" sx={{ pt: 3 }}>
-            
-            <Box mb={2}>
-                <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
-                    Dashboard
-                </Typography>
-                <Typography variant="h6" color="textSecondary" fontWeight="regular" sx={{ mt: 0.5 }}>
-                    Métricas e atividades recentes da sua gestão.
-                </Typography>
-            </Box>
 
             <Divider sx={{ mb: 4 }} />
 

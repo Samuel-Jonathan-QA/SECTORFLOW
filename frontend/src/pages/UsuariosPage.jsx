@@ -89,12 +89,6 @@ function UsuariosPage({ userRole }) {
         <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', width: '100%' }}>
             <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
 
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h4" fontWeight="900" sx={{ color: '#212121' }}>
-                        Gerenciamento de Usuários
-                    </Typography>
-                </Box>
-
                 <Divider sx={{ mb: 4 }} />
 
                 <Grid container spacing={3}>
