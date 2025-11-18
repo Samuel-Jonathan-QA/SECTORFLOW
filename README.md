@@ -17,7 +17,7 @@ O **SectorFlow** é uma solução full-stack desenvolvida para gerenciar recurso
 O sistema implementa **Role-Based Access Control (RBAC)** em cada rota da API REST, garantindo que usuários (ADMIN, VENDEDOR, USER) tenham visibilidade e permissões estritamente alinhadas às suas funções e setores associados. O objetivo é a máxima **segurança** e **separação de responsabilidades** no acesso aos dados.
 
 ### 🖼️ Tela de Login e Autenticação
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f1f54978-bb8d-409d-812c-531c46fea3c2" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/a1ea841c-78c1-4242-b037-7f507535a4f1" />
 
 
 ---
@@ -30,11 +30,11 @@ O sistema implementa **Role-Based Access Control (RBAC)** em cada rota da API RE
 | **VENDEDOR** | CRUD em Produtos (limitado aos seus setores). Acesso a Setores (apenas leitura). | Focado apenas em **Produtos** e métricas de estoque. |
 
 ### 🖼️ Tela do Dashboard (Visão do ADMIN)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/07ddba92-fecb-4c5e-a663-85d37b761e23" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/c9bd16ae-4b80-4f04-ac71-d606a850af18" />
 
 
 ### 🖼️ Tela do Dashboard (Visão do VENDEDOR)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f2910942-649c-4d37-9342-49225fa60eed" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/4ccbe8f9-ba40-4abe-b6e3-8397d03cd872" />
 
 
 ---
@@ -44,19 +44,19 @@ O sistema implementa **Role-Based Access Control (RBAC)** em cada rota da API RE
 ### 1. Gerenciamento de Usuários
 Permite ao ADMIN criar, editar e excluir usuários, além de atribuir-lhes **Roles** e associá-los a **Setores** específicos.
 - **Status:** ✅ Completo (com autorização por Role)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/0dac021d-2d60-40fb-8155-c8252f4c3180" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f97b3b87-e0ad-4b17-aa3c-f6d3931088a6" />
 
 
 ### 2. Gerenciamento de Setores
 Permite ao ADMIN a criação e gestão dos setores da empresa, servindo como a principal forma de segmentação do sistema.
 - **Status:** ✅ Completo (com autorização por Role)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/12f3d0ec-13eb-4f27-8b5f-c48c0df46094" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/137cacd2-043c-48a6-8ae2-62a7e16ee3b1" />
 
 
 ### 3. Gerenciamento de Produtos
 Módulo central para o fluxo de trabalho. Os produtos são associados a um setor e podem ter acesso limitado baseado na Role do usuário.
 - **Status:** ✅ Completo (com autorização e filtros por Role/Setor)
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/4ab37a70-f844-4b70-afb1-c8835fa962bc" />
+<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/f8a3ab9c-a957-44f4-8521-e47b479e862a" />
 
 
 ---
