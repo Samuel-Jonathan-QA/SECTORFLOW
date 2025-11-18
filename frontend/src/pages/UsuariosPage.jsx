@@ -86,8 +86,7 @@ function UsuariosPage({ userRole }) {
 
 
     return (
-        <Box sx={{ backgroundColor: '#fafafa', minHeight: '100vh', width: '100%' }}>
-            <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
+            <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
 
                 <Divider sx={{ mb: 4 }} />
 
@@ -131,7 +130,6 @@ function UsuariosPage({ userRole }) {
                     </DialogContent>
                 </Dialog>
             </Container>
-        </Box>
     );
 }
 
