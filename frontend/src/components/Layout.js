@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'; 
 import {
     Box, List, ListItem, ListItemText, ListItemIcon, Typography,
-    Button, CssBaseline, Container, Divider, Avatar, AppBar, Toolbar, Modal, Paper
+    Button, CssBaseline, Container, Divider, Avatar, AppBar, Toolbar, Modal, Paper,
+    Link 
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../api';
@@ -20,6 +21,7 @@ import UserFormEdit from './UserFormEdit';
 
 const drawerWidth = 200;
 const HEADER_HEIGHT = 64;
+const FOOTER_HEIGHT = 30;
 const BACKEND_URL = 'http://localhost:3001';
 const primaryColor = '#187bbd';
 
@@ -265,6 +267,48 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }
     );
 };
 
+const Footer = () => (
+    <Box
+        component="footer"
+        sx={{
+            width: `calc(100% - ${drawerWidth}px)`,
+            ml: `${drawerWidth}px`,
+            height: FOOTER_HEIGHT,
+            bgcolor: '#e0e0e0', 
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderTop: '1px solid #bdbdbd',
+            position: 'fixed',
+            bottom: 0,
+            zIndex: 1000,
+        }}
+    >
+        <Typography 
+            variant="caption" 
+            color="textSecondary" 
+            sx={{ opacity: 0.8 }} 
+        >
+            SectorFlow © {new Date().getFullYear()} - Todos os direitos reservados.
+            {' | '}
+            <Link 
+                href="https://github.com/Samuel-Jonathan-QA" 
+                target="_blank" 
+                rel="noopener" 
+                color="inherit"
+                underline="hover"
+                sx={{ 
+                    fontWeight: 'medium', 
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                }}
+            >
+                💻 Automação, café e paciência — nessa ordem.
+            </Link>
+        </Typography>
+    </Box>
+);
+
 const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -353,7 +397,7 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                     ml: `${drawerWidth}px`,
                     width: `calc(100% - ${drawerWidth}px)`,
                     pt: `${HEADER_HEIGHT + 24}px`,
-                    pb: 4,
+                    pb: `${FOOTER_HEIGHT + 16}px`, // Ajusta o padding bottom para garantir espaço
                     position: 'relative',
                 }}
             >
@@ -362,6 +406,8 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                     {children}
                 </Container>
             </Box>
+            
+            <Footer /> 
 
             <Modal
                 open={isProfileModalOpen}
