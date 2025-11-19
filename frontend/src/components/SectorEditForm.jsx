@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Paper, Typography, Box, Checkbox, FormControlLabel, FormGroup, CircularProgress } from '@mui/material';
+import { 
+    TextField, Button, Paper, Typography, Box, Checkbox, 
+    FormControlLabel, FormGroup, CircularProgress, 
+    Alert, AlertTitle, IconButton
+} from '@mui/material';
 import API from '../api';
 import { toast } from 'react-toastify'; 
 import GroupIcon from '@mui/icons-material/Group';
+import InfoIcon from '@mui/icons-material/Info';
 
 function SectorEditForm({ onFinish, currentSector, existingSectors = [], allVendors = [] }) {
     const [name, setName] = useState(currentSector.name);
@@ -10,6 +15,16 @@ function SectorEditForm({ onFinish, currentSector, existingSectors = [], allVend
     const [isLoading, setIsLoading] = useState(false);
     
     const [linkedVendorIds, setLinkedVendorIds] = useState([]);
+
+    const [isInfoVisible, setIsInfoVisible] = useState(false);
+
+    const pulseKeyframes = `
+        @keyframes pulseEffect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    `;
 
     useEffect(() => {
         setName(currentSector.name);
@@ -22,6 +37,7 @@ function SectorEditForm({ onFinish, currentSector, existingSectors = [], allVend
         }
 
         setError(''); 
+        setIsInfoVisible(false); // Resetar ao carregar novo setor
     }, [currentSector]); 
     
     const validateInput = (inputName) => {
@@ -52,6 +68,11 @@ function SectorEditForm({ onFinish, currentSector, existingSectors = [], allVend
                 return [...prevIds, vendorId];
             }
         });
+    };
+
+    // Função para mostrar/esconder o Alert local
+    const handleInfoToggle = () => {
+        setIsInfoVisible(prev => !prev);
     };
 
     const handleSubmit = async (e) => {
@@ -97,6 +118,7 @@ function SectorEditForm({ onFinish, currentSector, existingSectors = [], allVend
 
     return (
         <Paper style={{ padding: '10px 0 0 0' }} data-testid="sector-edit-form">
+            <style>{pulseKeyframes}</style> {/* Injeta o CSS da animação */}
             <form onSubmit={handleSubmit}>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                     Edite o nome e gerencie os usuários VENDEDOR associados a este setor.
@@ -115,10 +137,44 @@ function SectorEditForm({ onFinish, currentSector, existingSectors = [], allVend
                     sx={{ mb: 3 }}
                 />
                 
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                     <GroupIcon color="primary" fontSize="small"/> Vendedores Associados
-                </Typography>
-
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1, 
+                            mr: 1,
+                        }}
+                    >
+                         <GroupIcon color="primary" fontSize="small"/> Vendedores Associados
+                    </Typography>
+                    
+                    <IconButton 
+                        onClick={handleInfoToggle} 
+                        color="warning" 
+                        size="small" 
+                        title="Aviso de desenvolvimento (QA Karine)"
+                        sx={{
+                            animation: 'pulseEffect 1.5s infinite', 
+                            transition: 'transform 0.3s ease-in-out',
+                        }}
+                    >
+                        <InfoIcon />
+                    </IconButton>
+                </Box>
+                
+                {isInfoVisible && (
+                    <Alert 
+                        severity="info" 
+                        onClose={() => setIsInfoVisible(false)} 
+                        sx={{ mb: 2 }}
+                    >
+                        <AlertTitle>Aviso para a QA - Karine Silva</AlertTitle>
+                        O vínculo de usuários ao setor está em <strong>desenvolvimento</strong>. Esta interface é provisória.
+                    </Alert>
+                )}
+                
                 <Box sx={{ maxHeight: 200, overflowY: 'auto', p: 1, border: '1px solid #ddd', borderRadius: 1 }}>
                     <FormGroup>
                         {allVendors.length === 0 ? (
