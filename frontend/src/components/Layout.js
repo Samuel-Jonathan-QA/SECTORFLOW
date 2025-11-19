@@ -7,7 +7,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../api';
 import API from '../api'; 
 
-// ✅ NOVO: Importa a função de atualização global do App.js
 import { updateLoggedUserGlobally } from '../App'; 
 
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -24,7 +23,6 @@ const HEADER_HEIGHT = 64;
 const BACKEND_URL = 'http://localhost:3001';
 const primaryColor = '#187bbd';
 
-// ⬅️ NOVO: Componente da Modal de Confirmação de Saída
 const LogoutConfirmationModal = ({ open, handleClose, handleConfirm }) => (
     <Modal
         open={open}
@@ -74,7 +72,7 @@ const LogoutConfirmationModal = ({ open, handleClose, handleConfirm }) => (
     </Modal>
 );
 
-const Sidebar = ({ userRole, loggedUser, handleOpenLogoutModal, navigate }) => { // ⬅️ Mudança: handleLogout -> handleOpenLogoutModal
+const Sidebar = ({ userRole, loggedUser, handleOpenLogoutModal, navigate }) => {
 
     const location = useLocation();
     const currentPath = location.pathname;
@@ -173,7 +171,7 @@ const Sidebar = ({ userRole, loggedUser, handleOpenLogoutModal, navigate }) => {
                     fullWidth
                     variant="contained"
                     startIcon={<LogoutIcon />}
-                    onClick={handleOpenLogoutModal} // ⬅️ Mudança: Abre a modal, não faz o logout direto
+                    onClick={handleOpenLogoutModal}
                     sx={{
                         mt: 1,
                         bgcolor: primaryColor,
@@ -191,7 +189,6 @@ const Sidebar = ({ userRole, loggedUser, handleOpenLogoutModal, navigate }) => {
     );
 };
 
-// FixedHeader e modalStyle permanecem inalterados
 const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }) => {
     const profileSrc = loggedUser?.profilePicture
         ? `${BACKEND_URL}${loggedUser.profilePicture}`
@@ -211,7 +208,6 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }
         >
             <Toolbar sx={{ justifyContent: 'space-between', minHeight: HEADER_HEIGHT }}>
 
-                {/* Título e Subtítulo da Página */}
                 <Box>
                     <Typography
                         variant="h5"
@@ -230,7 +226,6 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }
                     )}
                 </Box>
 
-                {/* Informações do Usuário (Direita) - Clicável */}
                 <Box
                     onClick={onOpenProfileModal}
                     sx={{
@@ -262,7 +257,6 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }
                         src={profileSrc}
                         sx={{ width: 40, height: 40, fontSize: 18 }}
                     >
-                        {/* Usa a primeira letra do nome como fallback, se houver nome e não houver foto */}
                         {!loggedUser?.profilePicture && loggedUser?.name ? loggedUser.name[0].toUpperCase() : <AccountCircleIcon sx={{ color: '#ffffff' }} />}
                     </Avatar>
                 </Box>
@@ -289,10 +283,9 @@ const modalStyle = {
 function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }) {
     const navigate = useNavigate();
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false); // ⬅️ NOVO: Estado para a modal de saída
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [sectors, setSectors] = useState([]); 
 
-    // ✅ Busca a lista de setores na montagem (necessário para o Select do UserEditForm)
     useEffect(() => {
         const fetchSectors = async () => {
             try {
@@ -303,7 +296,7 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                 if (loggedUser?.role !== 'ADMIN') {
                     setSectors(loggedUser?.Sectors || []); 
                 } else {
-                     setSectors([]); 
+                    setSectors([]); 
                 }
             }
         };
@@ -313,16 +306,14 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
         }
     }, [loggedUser]);
 
-    // ⬅️ FUNÇÕES DA MODAL DE SAÍDA
     const handleOpenLogoutModal = () => setIsLogoutModalOpen(true);
     const handleCloseLogoutModal = () => setIsLogoutModalOpen(false);
 
-    // ⬅️ FUNÇÃO QUE EXECUTA O LOGOUT APÓS A CONFIRMAÇÃO
     const handleConfirmLogout = () => {
         logout();
         setLoggedUser(null);
         navigate('/');
-        handleCloseLogoutModal(); // Fecha a modal após o logout (embora a página seja redirecionada)
+        handleCloseLogoutModal();
     };
 
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
@@ -344,7 +335,7 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
             <Sidebar
                 userRole={userRole}
                 loggedUser={loggedUser}
-                handleOpenLogoutModal={handleOpenLogoutModal} // ⬅️ Passa a função para abrir a modal
+                handleOpenLogoutModal={handleOpenLogoutModal}
                 navigate={navigate}
             />
 
@@ -372,7 +363,6 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                 </Container>
             </Box>
 
-            {/* Renderiza o Modal de Edição de Perfil */}
             <Modal
                 open={isProfileModalOpen}
                 onClose={handleCloseProfileModal}
@@ -390,13 +380,11 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                 </Box>
             </Modal>
             
-            {/* ⬅️ NOVO: Modal de Confirmação de Saída */}
             <LogoutConfirmationModal
                 open={isLogoutModalOpen}
                 handleClose={handleCloseLogoutModal}
                 handleConfirm={handleConfirmLogout}
             />
-            {/* ⬅️ Fim do Novo Componente */}
 
         </Box>
     );

@@ -1,3 +1,5 @@
+// frontend/src/pages/SetoresPage.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button, Paper, Divider, CircularProgress } from '@mui/material';
 import SectorForm from '../components/SectorForm'; 
@@ -19,7 +21,6 @@ function SetoresPage({ userRole }) {
 
     const canManageSectors = userRole && userRole.toUpperCase() === 'ADMIN';
 
-    // Função para buscar a lista de setores
     const fetchSectors = useCallback(async () => {
         if (!canManageSectors) {
             setSectors([]); 
@@ -35,17 +36,14 @@ function SetoresPage({ userRole }) {
         }
     }, [canManageSectors]); 
     
-    // ✅ CORRIGIDO: Função para buscar e FILTRAR explicitamente APENAS usuários VENDEDOR
     const fetchVendors = useCallback(async () => {
         if (!canManageSectors) {
             setVendors([]); 
             return;
         }
         try {
-            // Mantém o parâmetro para otimizar a busca no backend, mas não confiamos nele
             const res = await API.get('/users?role=VENDEDOR'); 
             
-            // **FILTRO DE SEGURANÇA**: Garante que apenas usuários com role 'VENDEDOR' (em maiúsculas) sejam usados
             const onlyVendors = res.data.filter(user => 
                  user.role && user.role.toUpperCase() === 'VENDEDOR'
             );
@@ -71,7 +69,7 @@ function SetoresPage({ userRole }) {
         } else {
              setIsLoading(false);
         }
-       
+        
     }, [canManageSectors, fetchSectors, fetchVendors]);
 
 
@@ -114,12 +112,12 @@ function SetoresPage({ userRole }) {
     }
     
     if (isLoading) {
-         return (
-             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                 <CircularProgress />
-                 <Typography variant="h6" sx={{ ml: 2 }}>Carregando dados...</Typography>
-             </Box>
-         );
+          return (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                  <CircularProgress />
+                  <Typography variant="h6" sx={{ ml: 2 }}>Carregando dados...</Typography>
+              </Box>
+          );
     }
 
     return (

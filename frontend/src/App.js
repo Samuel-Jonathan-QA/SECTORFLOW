@@ -16,36 +16,23 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFoundRedirect from './components/NotFoundRedirect'; 
 
-// --- SOLUÇÃO DE ARQUIVO ÚNICO: Gerenciamento Global de Estado do Usuário ---
-
-// Variável para armazenar a função setLoggedUser do AppContent
 let globalSetLoggedUser = null;
 
-/**
- * Atualiza o objeto do usuário logado no localStorage e no estado global do React.
- * Qualquer componente pode importar e chamar esta função:
- * import { updateLoggedUserGlobally } from '../App';
- * * @param {object} newUserData - O novo objeto de usuário (ex: { name: 'Novo Nome' }).
- */
 export const updateLoggedUserGlobally = (newUserData) => {
     if (globalSetLoggedUser && newUserData) {
         try {
-            // 1. Puxa os dados atuais do localStorage (incluindo o token)
             const storedUser = JSON.parse(localStorage.getItem('loggedUser') || '{}');
             
-            // Mescla os dados existentes com os novos dados recebidos
             const finalUserData = { 
                 ...storedUser,
                 ...newUserData 
             };
 
-            // 2. Atualiza o localStorage com os novos dados
             localStorage.setItem('loggedUser', JSON.stringify(finalUserData));
             
-            // 3. Atualiza o estado do React no componente principal (AppContent)
             globalSetLoggedUser(finalUserData);
             
-            console.log("Usuário atualizado globalmente (Solução 1 arquivo).");
+            console.log("Usuário atualizado globalmente.");
 
         } catch (error) {
             console.error("Erro ao atualizar o usuário globalmente:", error);
@@ -55,8 +42,6 @@ export const updateLoggedUserGlobally = (newUserData) => {
         console.warn("Tentativa de atualizar usuário globalmente sem setter registrado ou sem dados.");
     }
 };
-
-// --- FIM DA SOLUÇÃO ARQUIVO ÚNICO ---
 
 
 const theme = createTheme({
@@ -87,7 +72,6 @@ function AppContent() {
     };
     
     useEffect(() => {
-        // NOVO: Registra o setLoggedUser na variável global
         globalSetLoggedUser = setLoggedUser;
 
         const storedUser = localStorage.getItem('loggedUser');
@@ -101,7 +85,7 @@ function AppContent() {
             }
         }
         setIsLoading(false);
-    }, []); // A array vazia garante que a função só roda na montagem inicial
+    }, []); 
     
     useEffect(() => {
         setLogoutHandler(performAppLogout);
@@ -144,7 +128,6 @@ function AppContent() {
             <Route
                 path="/sectors"
                 element={
-                    // ✅ Restrição: Apenas 'ADMIN' pode acessar. Outros vão para /dashboard.
                     <ProtectedRoute loggedUser={loggedUser} allowedRoles={['ADMIN']}>
                         <Layout
                             loggedUser={loggedUser}
@@ -161,7 +144,6 @@ function AppContent() {
             <Route
                 path="/users"
                 element={
-                    // ✅ Restrição: Apenas 'ADMIN' pode acessar. Outros vão para /dashboard.
                     <ProtectedRoute loggedUser={loggedUser} allowedRoles={['ADMIN']}>
                         <Layout
                             loggedUser={loggedUser}

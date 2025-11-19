@@ -3,35 +3,29 @@ import { TextField, Button, Paper, Typography, Box } from '@mui/material';
 import API from '../api';
 import { toast } from 'react-toastify'; 
 
-// Componente para a CRIAÇÃO de um novo setor (sempre vazio)
 function SectorForm({ onFinish, existingSectors = [] }) {
     const [name, setName] = useState('');
     const [error, setError] = useState(''); 
     
-    // O currentSector é sempre nulo na criação, mas passamos currentSector={null} para a função
     const currentSector = null; 
 
     const validateInput = (inputName) => {
         const cleanName = inputName.trim();
 
-        // 1. Regra de Tamanho (3 a 50 caracteres)
         if (cleanName.length < 3 || cleanName.length > 50) {
             return 'O nome deve ter entre 3 e 50 caracteres.';
         }
         
-        // 2. Regra de Caracteres Válidos
         const validCharsRegex = /^[a-zA-Z0-9\u00C0-\u00FF\s\-'',]*$/; 
         if (!validCharsRegex.test(cleanName)) {
             return 'O nome contém caracteres inválidos. Use apenas letras, números, espaços, hífens (-) ou vírgulas (,).';
         }
         
-        // Regra de Conteúdo Mínimo
         const hasLetters = /[a-zA-Z\u00C0-\u00FF]/.test(cleanName);
         if (!hasLetters) {
              return 'O nome deve conter letras descritivas.';
         }
         
-        // 3. Regra de Duplicidade (Case Insensitive)
         const isDuplicate = existingSectors.some(sector => {
             return sector.name.trim().toLowerCase() === cleanName.toLowerCase();
         });
@@ -40,7 +34,7 @@ function SectorForm({ onFinish, existingSectors = [] }) {
             return 'Já existe um setor com este nome.';
         }
 
-        return null; // Sem erros
+        return null;
     };
 
     const handleSubmit = async (e) => {
@@ -61,7 +55,6 @@ function SectorForm({ onFinish, existingSectors = [] }) {
 
             onFinish(); 
             
-            // Limpa o formulário após o sucesso
             setName(''); 
             setError(''); 
             

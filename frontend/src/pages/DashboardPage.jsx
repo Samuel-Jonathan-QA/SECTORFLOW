@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Container, Grid, Paper, Typography, Box, Divider, 
-    // List, ListItem, ListItemText removidos pois serão substituídos pelo SectorList
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom'; 
 import API from '../api'; 
 
 import ProductList from '../components/ProductList'; 
-import SectorList from '../components/SectorList'; // ⬅️ Adicionado: Componente SectorList
+import SectorList from '../components/SectorList'; 
 
 import InventoryIcon from '@mui/icons-material/Inventory'; 
 import CategoryIcon from '@mui/icons-material/Category'; 
 import GroupIcon from '@mui/icons-material/Group'; 
 import PaidIcon from '@mui/icons-material/Paid'; 
-// import DescriptionIcon removido, pois SectorList tem seu próprio CategoryIcon
 
 function DashboardPage({ loggedUser }) {
     const navigate = useNavigate();
@@ -178,7 +176,6 @@ function DashboardPage({ loggedUser }) {
         );
     };
 
-    // ⬅️ Removido: Componente SectorListItem
 
     const latestProducts = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
     const activeSectors = sectors.slice(0, 5);
@@ -211,7 +208,6 @@ function DashboardPage({ loggedUser }) {
                     <ProductList
                         products={latestProducts}
                         sectors={sectors} 
-                        // Props que desabilitam a funcionalidade de controle/ação no ProductList
                         showControls={false} 
                         hideActions={true} 
                         height={410} 
@@ -225,18 +221,14 @@ function DashboardPage({ loggedUser }) {
                             Setores Ativos
                         </Typography>
                         
-                        {/* ⬅️ Substituído: Usando SectorList no lugar da listagem própria */}
                         <SectorList
-                            sectors={activeSectors} // Exibe apenas os 5 mais recentes/ativos
-                            users={users} // Necessário para exibir a contagem de usuários
+                            sectors={activeSectors} 
+                            users={users} 
                             height={410} 
-                            
-                            // Propriedades que desabilitam as ações
                             onDelete={undefined} 
                             onEdit={undefined} 
-                            userRole={undefined} // Ou apenas omita esta prop para não mostrar as ações
+                            userRole={undefined} 
                         />
-                        {/* ⬅️ Fim da Substituição */}
                         
                     </Grid>
                 )}

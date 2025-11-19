@@ -1,7 +1,7 @@
 // frontend/src/components/ProductList.js
 
 import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types'; // ⬅️ Adicionado: Para validação de props
+import PropTypes from 'prop-types';
 import {
     List, ListItem, ListItemText, Typography, Paper,
     IconButton, Box, Divider,
@@ -28,7 +28,6 @@ function ProductList({
     height = 425
 }) {
 
-    // --- 1. Estado Interno (Para permitir controle interno ou externo) ---
     const [internalSearchTerm, setInternalSearchTerm] = useState('');
     const [internalSelectedSectorId, setInternalSelectedSectorId] = useState('all');
 
@@ -44,7 +43,6 @@ function ProductList({
         : (e) => setInternalSelectedSectorId(e.target.value);
 
 
-    // --- 2. Lógica de Permissões ---
     const canManageProduct = (product) => {
         if (!onEdit && !onDelete) return false;
 
@@ -54,18 +52,15 @@ function ProductList({
         }
         if (role === 'VENDEDOR') {
             const validUserSectorIds = Array.isArray(userSectorIds) ? userSectorIds : [];
-            // Comparação de ID de setor: assume-se que sectorId é um número.
-            return validUserSectorIds.includes(product.sectorId); 
+            return validUserSectorIds.includes(product.sectorId);
         }
         return false;
     };
 
-    // --- 3. Constantes de Layout ---
     const PRICE_QUANTITY_WIDTH = 90;
     const ACTIONS_WIDTH = 50;
-    const RESERVED_WIDTH = PRICE_QUANTITY_WIDTH + ACTIONS_WIDTH + 60; // 60 é o padding/margem + ícone da tag
+    const RESERVED_WIDTH = PRICE_QUANTITY_WIDTH + ACTIONS_WIDTH + 60;
 
-    // --- 4. Produtos Filtrados (Memorizado para performance) ---
     const filteredProducts = useMemo(() => {
         const productsToFilter = Array.isArray(products) ? products : [];
 
@@ -86,30 +81,25 @@ function ProductList({
             return matchesSearch && matchesSector;
         });
 
-        // Ordenação por ID decrescente (mais recente primeiro)
         return filtered.slice().sort((a, b) => {
             return b.id - a.id;
         });
 
     }, [products, currentSearchTerm, currentSelectedSectorId]);
 
-    // --- 5. Setores para o Dropdown (Memorizado para performance) ---
     const sectorsInDropdown = useMemo(() => {
         const allSectors = Array.isArray(sectors) ? sectors : [];
         const allProducts = Array.isArray(products) ? products : [];
 
         const sectorIdsInUse = new Set(allProducts.map(p => p.sectorId).filter(id => id !== undefined));
 
-        // Retorna apenas setores que possuem produtos
         return allSectors.filter(sector => sectorIdsInUse.has(sector.id));
 
-    }, [products, sectors]); 
+    }, [products, sectors]);
 
 
-    // --- 6. Renderização ---
     return (
-        // ⬅️ Ajuste: Usando sx no lugar de style, mais idiomático do MUI
-        <Paper elevation={3} sx={{ p: 1.25 }}> 
+        <Paper elevation={3} sx={{ p: 1.25 }}>
 
             {showControls && (
                 <Box sx={{ mb: 2 }}>
@@ -144,14 +134,13 @@ function ProductList({
                                             {sector.name}
                                         </MenuItem>
                                     ))}
-                                    {/* Lógica para incluir o setor atual se ele estiver selecionado, mas não tiver produtos (situação incomum, mas tratada) */}
                                     {currentSelectedSectorId !== 'all' &&
                                         !sectorsInDropdown.some(s => Number(s.id) === Number(currentSelectedSectorId)) &&
                                         sectors.find(s => Number(s.id) === Number(currentSelectedSectorId)) && (
-                                            <MenuItem 
-                                                key={currentSelectedSectorId} 
-                                                value={currentSelectedSectorId} 
-                                                sx={{ backgroundColor: '#fffbe5' }} // ⬅️ Ajuste: Usando sx
+                                            <MenuItem
+                                                key={currentSelectedSectorId}
+                                                value={currentSelectedSectorId}
+                                                sx={{ backgroundColor: '#fffbe5' }}
                                             >
                                                 {sectors.find(s => Number(s.id) === Number(currentSelectedSectorId))?.name} (Setor Ativo)
                                             </MenuItem>
@@ -167,7 +156,6 @@ function ProductList({
             {showControls && <Divider sx={{ mb: 2 }} />}
 
 
-            {/* ⬅️ Div com altura controlada e scroll */}
             <div style={{ height: `${height}px`, overflowY: 'auto' }}>
                 <List disablePadding>
                     {filteredProducts.map((product, index) => {
@@ -186,7 +174,6 @@ function ProductList({
                                     sx={{ py: 1.5, px: 2 }}
                                     secondaryAction={
                                         <Box display="flex" alignItems="center">
-                                            {/* Bloco de Preço/Quantidade */}
                                             <Box textAlign="right" sx={{
                                                 flexShrink: 0,
                                                 minWidth: PRICE_QUANTITY_WIDTH,
@@ -200,7 +187,6 @@ function ProductList({
                                                 </Typography>
                                             </Box>
 
-                                            {/* Bloco de Ações (Editar/Excluir) */}
                                             {showActionsBlock && (
                                                 <Box
                                                     display="flex"
@@ -254,8 +240,7 @@ function ProductList({
                                             flexShrink: 1,
                                             minWidth: 0,
                                             mr: 2,
-                                            // MaxWidth calcula o espaço disponível, subtraindo o preço/quantidade e ações
-                                            maxWidth: `calc(100% - ${RESERVED_WIDTH}px)` 
+                                            maxWidth: `calc(100% - ${RESERVED_WIDTH}px)`
                                         }}
                                     />
 
@@ -280,7 +265,6 @@ function ProductList({
     );
 }
 
-// ⬅️ Adicionado: Definição de PropTypes para robustez, Samuka.
 ProductList.propTypes = {
     products: PropTypes.array,
     sectors: PropTypes.array,

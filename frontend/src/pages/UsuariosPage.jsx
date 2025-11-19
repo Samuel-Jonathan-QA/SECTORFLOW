@@ -41,21 +41,15 @@ function UsuariosPage({ userRole }) {
         }
     }, []);
 
-    // ✅ ATUALIZADO: Agora escuta o evento global 'user-data-updated'
     useEffect(() => {
-        // 1. Busca inicial ao carregar a página
         fetchUsers();
 
-        // 2. Handler para quando o evento global for disparado
         const handleGlobalUpdate = () => {
-            // Recarrega a lista silenciosamente
             fetchUsers();
         };
 
-        // 3. Adiciona o ouvinte do evento
         window.addEventListener('user-data-updated', handleGlobalUpdate);
 
-        // 4. Limpeza: remove o ouvinte quando o componente for desmontado
         return () => {
             window.removeEventListener('user-data-updated', handleGlobalUpdate);
         };
@@ -84,7 +78,6 @@ function UsuariosPage({ userRole }) {
     const handleCloseModal = () => {
         setOpenModal(false);
         setEditingUser(null);
-        // Nota: O fetchUsers aqui ainda é útil como backup, mas o evento global cuidará da maioria dos casos.
         fetchUsers();
     };
 
