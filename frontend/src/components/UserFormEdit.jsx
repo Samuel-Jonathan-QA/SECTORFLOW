@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
     TextField, Button, MenuItem, Paper, FormControl, InputLabel, Select,
-    OutlinedInput, Checkbox, Box, ListItemText, Typography, Avatar, IconButton
+    OutlinedInput, Checkbox, Box, ListItemText, Typography, Avatar, IconButton, Modal
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import API from '../api';
 import { toast } from 'react-toastify';
+// ✅ IMPORTAR A FUNÇÃO DO APP.JS (Verifique se o caminho '../App' está correto para sua pasta)
+import { updateLoggedUserGlobally } from '../App';
 
 const BACKEND_URL = 'http://localhost:3001';
 
@@ -21,7 +23,8 @@ const MenuProps = {
     },
 };
 
-function UserEditForm({ sectors, currentUser, onFinish }) {
+// ✅ Adicionado props isSelfEdit e onUserUpdate
+function UserFormEdit({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUpdate }) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -32,6 +35,8 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
     const [previewUrl, setPreviewUrl] = useState('');
     const [isHovered, setIsHovered] = useState(false);
     const [mustRemoveCurrentPicture, setMustRemoveCurrentPicture] = useState(false);
+    // ✅ NOVO ESTADO: Para gerenciar o erro de validação do e-mail
+    const [emailError, setEmailError] = useState('');
 
     const roleOptions = [
         { value: 'ADMIN', label: 'Administrador' },
@@ -39,15 +44,16 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
     ];
 
     useEffect(() => {
-        if (currentUser) { 
+        if (currentUser) {
             setName(currentUser.name);
             setEmail(currentUser.email);
             setPassword('');
             setRole(currentUser.role || '');
+            setEmailError(''); // Limpa o erro ao carregar um novo usuário
 
-            setProfilePictureFile(null); 
-            setMustRemoveCurrentPicture(false); 
-            
+            setProfilePictureFile(null);
+            setMustRemoveCurrentPicture(false);
+
             if (currentUser.profilePicture) {
                 setFileName('Foto Atual');
             } else {
@@ -64,15 +70,16 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
     useEffect(() => {
         let objectUrl;
         let finalPreviewUrl = '';
-        
+
         if (profilePictureFile) {
             objectUrl = URL.createObjectURL(profilePictureFile);
             finalPreviewUrl = objectUrl;
-        } 
+        }
         else if (currentUser && currentUser.profilePicture && !mustRemoveCurrentPicture) {
+            // Se estiver editando um usuário existente e não removeu a foto, mostra a foto atual.
             finalPreviewUrl = currentUser.profilePicture;
         }
-        
+
         setPreviewUrl(finalPreviewUrl);
 
         return () => {
@@ -83,6 +90,7 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
     }, [profilePictureFile, currentUser, mustRemoveCurrentPicture]);
 
 
+    // A função clearForm não é usada aqui, mas manterei para não quebrar a estrutura.
     const clearForm = () => {
     };
 
@@ -102,7 +110,7 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
         if (file) {
             setProfilePictureFile(file);
             setFileName(file.name);
-            setMustRemoveCurrentPicture(false); 
+            setMustRemoveCurrentPicture(false);
         } else {
             setProfilePictureFile(null);
             setFileName('');
@@ -110,9 +118,9 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
     };
 
     const handleRemoveFile = () => {
-        setProfilePictureFile(null); 
+        setProfilePictureFile(null);
         setFileName('');
-        setPreviewUrl(''); 
+        setPreviewUrl('');
 
         if (currentUser && currentUser.profilePicture) {
             setMustRemoveCurrentPicture(true);
@@ -123,55 +131,99 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const formData = new FormData();
+        // --- VALIDAÇÕES (Mantidas) ---
+        const invalidCharRegex = /[^a-zA-Z0-9@\.]/g;
+        if (invalidCharRegex.test(email)) {
+            setEmailError("Somente letras (a - z), números (0 - 9), arroba (@) e pontos (.) são permitidos");
+            toast.error('Corrige o erro no campo de e-mail.');
+            return;
+        } else {
+            setEmailError('');
+        }
 
+        if (!name || !email || !role) {
+            if (!emailError) toast.error('Preencha todos os campos obrigatórios.');
+            return;
+        }
+
+        if (!isSelfEdit && role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
+            toast.error('Vendedores devem ser associados a pelo menos um setor.');
+            return;
+        }
+        // -----------------------------
+
+        const formData = new FormData();
         formData.append('name', name);
+        formData.append('email', email);
         formData.append('role', role);
         formData.append('password', password);
 
-        sectorIds.forEach(id => formData.append('sectorIds[]', id));
+        const safeSectorIds = Array.isArray(sectorIds) ? sectorIds : [];
+        safeSectorIds.forEach(id => formData.append('sectorIds[]', id));
 
         if (profilePictureFile) {
             formData.append('profilePicture', profilePictureFile);
         } else if (currentUser.profilePicture && mustRemoveCurrentPicture) {
             formData.append('profilePictureRemove', 'true');
-        } 
-
-        if (!name || !email || !role) {
-            toast.error('Preencha todos os campos obrigatórios.');
-            return;
-        }
-
-        if (role.toUpperCase() === 'VENDEDOR' && (!sectorIds || sectorIds.length === 0)) {
-            toast.error('Vendedores devem ser associados a pelo menos um setor.');
-            return;
         }
 
         try {
-            const config = {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            if (!password) formData.delete('password');
 
-            if (!password) {
-                formData.delete('password'); 
+            // 1. Realiza o update no backend
+            const response = await API.put(`/users/${currentUser.id}`, formData, config);
+            const updatedUserFromBackend = response.data;
+
+            // 2. CORREÇÃO DO BUG 2: Atualizar o estado global se for o PRÓPRIO usuário
+            // Pegamos quem está logado no momento
+            const storedUser = JSON.parse(localStorage.getItem('loggedUser') || '{}');
+
+            // Se o ID do usuário editado for igual ao ID do usuário logado...
+            if (storedUser && String(storedUser.id) === String(updatedUserFromBackend.id)) {
+                console.log("Editando a si mesmo via Lista ou Header: Atualizando Global...");
+
+                const newUserData = {
+                    ...storedUser, // Mantém token e dados antigos
+                    ...updatedUserFromBackend, // Sobrescreve com dados novos (nome, foto, etc)
+                    token: storedUser.token // Garante que o token não suma
+                };
+
+                // Chama a função do App.js que atualiza o Header e o LocalStorage
+                updateLoggedUserGlobally(newUserData);
             }
 
-            await API.put(`/users/${currentUser.id}`, formData, config);
+            // 3. CORREÇÃO DO BUG 1: Disparar evento para atualizar listagens
+            // Isso grita para o navegador: "Ei, atualizei um usuário!"
+            window.dispatchEvent(new Event('user-data-updated'));
+
             toast.success('Usuário atualizado com sucesso!');
-            
-            onFinish();
+
+            // Se foi passado onFinish (fechar modal), chama ele
+            if (onFinish) onFinish();
+
         } catch (error) {
+            console.error("Erro ao atualizar:", error);
             toast.error(error.response?.data?.error || 'Erro ao atualizar usuário.');
         }
     };
 
-    const submitButtonText = 'Salvar Edição';
+    const submitButtonText = isSelfEdit ? 'Salvar Alterações' : 'Salvar Edição';
     const passwordRequired = false;
     const isAdmin = role.toUpperCase() === 'ADMIN';
-    const hasImage = !!previewUrl; 
+
+    // Condição para desativar Role e Setores no modo de auto-edição
+    const disableRoleAndSectors = isSelfEdit;
+    const hasImage = !!previewUrl;
 
     return (
-        <Paper elevation={3} style={{ padding: '10px' }} data-testid="user-edit-form">
+        // O padding foi ajustado para melhor visualização em Modal
+        <Paper elevation={3} style={{ padding: isSelfEdit ? '24px' : '10px' }} data-testid="user-edit-form">
+            {isSelfEdit && (
+                <Typography variant="h6" gutterBottom align="center" sx={{ mb: 2 }}>
+                    Editar Meu Perfil
+                </Typography>
+            )}
             <form onSubmit={handleSubmit}>
                 <Box
                     sx={{
@@ -182,6 +234,7 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                         mt: 1
                     }}
                 >
+                    {/* ... Lógica do Avatar ... (mantida inalterada) */}
                     <Box
                         sx={{
                             display: 'inline-block',
@@ -237,7 +290,7 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                         id="profile-picture-upload-edit"
                         type="file"
                         onChange={handleFileChange}
-                        key={currentUser ? currentUser.id : 'edit-user-upload'} 
+                        key={currentUser ? currentUser.id : 'edit-user-upload'}
                     />
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -246,14 +299,31 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                         </Typography>
                         <label htmlFor="profile-picture-upload-edit">
                             <Button variant="outlined" component="span">
-                                Selecionar Foto
+                                {hasImage && isSelfEdit ? 'Trocar Foto' : 'Selecionar Foto'}
                             </Button>
                         </label>
                     </Box>
+
                 </Box>
-                
+
                 <TextField label="Nome" value={name} onChange={(e) => setName(e.target.value)} required fullWidth margin="normal" />
-                <TextField label="Email" type="email" value={email} required fullWidth margin="normal" disabled/>
+                <TextField
+                    label="Email"
+                    type="email"
+                    value={email}
+                    // Permite a inserção, a validação é feita no submit
+                    onChange={(e) => {
+                        setEmail(e.target.value);
+                        // Limpa o erro ao começar a digitar
+                        if (emailError) setEmailError('');
+                    }}
+                    required
+                    fullWidth
+                    margin="normal"
+                    // Controla a exibição do erro
+                    error={!!emailError}
+                    helperText={emailError}
+                />
 
                 <TextField
                     select
@@ -263,6 +333,7 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                     required
                     fullWidth
                     margin="normal"
+                    disabled={disableRoleAndSectors}
                 >
                     {roleOptions.map(option => (
                         <MenuItem key={option.value} value={option.value}>
@@ -275,7 +346,7 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                     fullWidth
                     margin="normal"
                     required={!isAdmin}
-                    disabled={isAdmin}
+                    disabled={disableRoleAndSectors}
                 >
                     <InputLabel id="sector-select-label">Setores</InputLabel>
                     <Select
@@ -288,6 +359,10 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                             const selectedNames = sectors
                                 .filter(sector => selectedIds.includes(sector.id))
                                 .map(sector => sector.name);
+
+                            if (isSelfEdit && sectors.length === 0 && currentUser?.Sectors) {
+                                return currentUser.Sectors.map(s => s.name).join(', ');
+                            }
                             return selectedNames.join(', ');
                         }}
                         MenuProps={MenuProps}
@@ -318,12 +393,30 @@ function UserEditForm({ sectors, currentUser, onFinish }) {
                     margin="normal"
                 />
 
-                <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-                    {submitButtonText}
-                </Button>
+                {/* ✅ NOVO: Box para agrupar os botões de Ação (Salvar e Cancelar) */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: isSelfEdit ? 3 : 2 }}>
+
+                    {/* Botão Cancelar */}
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={onFinish} // Função que fecha o formulário/modal
+                    >
+                        Cancelar
+                    </Button>
+
+                    {/* Botão de Submissão */}
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                    >
+                        {submitButtonText}
+                    </Button>
+                </Box>
             </form>
         </Paper>
     );
 }
 
-export default UserEditForm;
+export default UserFormEdit;

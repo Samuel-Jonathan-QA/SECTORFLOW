@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // ✅ Adicionado useEffect
 import {
     Box, List, ListItem, ListItemText, ListItemIcon, Typography,
-    Button, CssBaseline, Container, Divider, Avatar, AppBar, Toolbar
+    Button, CssBaseline, Container, Divider, Avatar, AppBar, Toolbar, Modal
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../api';
+import API from '../api'; // ✅ Adicionado API para buscar setores
+
+// ✅ NOVO: Importa a função de atualização global do App.js
+import { updateLoggedUserGlobally } from '../App'; 
 
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -13,6 +17,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import GroupIcon from '@mui/icons-material/Group';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SectorFlowLogo from '../assets/logo1.png';
+import UserFormEdit from './UserFormEdit'; // ✅ Importa o componente UserEditForm
 
 const drawerWidth = 200;
 const HEADER_HEIGHT = 64;
@@ -136,7 +141,8 @@ const Sidebar = ({ userRole, loggedUser, handleLogout, navigate }) => {
     );
 };
 
-const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle }) => {
+// FixedHeader recebe onOpenProfileModal
+const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }) => {
     const profileSrc = loggedUser?.profilePicture
         ? `${BACKEND_URL}${loggedUser.profilePicture}`
         : undefined;
@@ -155,20 +161,17 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle }) => {
         >
             <Toolbar sx={{ justifyContent: 'space-between', minHeight: HEADER_HEIGHT }}>
 
-                {/* 🚀 Título e Subtítulo da Página (Ajustado) */}
+                {/* Título e Subtítulo da Página */}
                 <Box>
                     <Typography
-                        // ✅ Aumentado para 'h5' para mais destaque
                         variant="h5"
                         fontWeight="bold"
-                        // ✅ Aumentado para 1.4rem (ou mantenha h5 para usar o tamanho padrão do tema)
                         sx={{ color: '#424242', lineHeight: 1.2, fontSize: '1.4rem' }}
                     >
                         {pageTitle}
                     </Typography>
                     {pageSubtitle && (
                         <Typography
-                            // ✅ Aumentado para 'body2' para ser mais legível que 'caption'
                             variant="body2"
                             color="textSecondary"
                         >
@@ -177,8 +180,9 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle }) => {
                     )}
                 </Box>
 
-                {/* Informações do Usuário (Direita) */}
+                {/* Informações do Usuário (Direita) - Clicável */}
                 <Box
+                    onClick={onOpenProfileModal}
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -196,7 +200,7 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle }) => {
                     </Typography>
                     <Avatar
                         src={profileSrc}
-                        sx={{ width: 40, height: 40, bgcolor: primaryColor, fontSize: 18 }}
+                        sx={{ width: 40, height: 40, fontSize: 18 }}
                     >
                         {!loggedUser?.profilePicture && loggedUser?.name ? loggedUser.name[0].toUpperCase() : <AccountCircleIcon sx={{ color: '#ffffff' }} />}
                     </Avatar>
@@ -206,10 +210,49 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle }) => {
     );
 };
 
+const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '90%',
+    maxWidth: 400,
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 0,
+    borderRadius: 2,
+    outline: 'none',
+};
 
-// Layout recebe pageTitle e pageSubtitle
+
 function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }) {
     const navigate = useNavigate();
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    // Note: Mantendo a lógica de fallback do setor que você havia incluído, embora a busca na montagem seja mais segura.
+    const [sectors, setSectors] = useState([]); 
+
+    // ✅ Busca a lista de setores na montagem (necessário para o Select do UserEditForm)
+    useEffect(() => {
+        const fetchSectors = async () => {
+            try {
+                const response = await API.get('/sectors');
+                setSectors(response.data);
+            } catch (error) {
+                console.error("Erro ao buscar setores:", error);
+                // Pode ignorar o erro se o usuário for VENDEDOR, pois os campos estarão disabled
+                if (loggedUser?.role !== 'ADMIN') {
+                    setSectors(loggedUser?.Sectors || []); // Usa os setores do próprio usuário para exibir
+                } else {
+                     setSectors([]); // Define como vazio se for ADMIN e falhar (para evitar campos nulos no form)
+                }
+            }
+        };
+
+        if (loggedUser) {
+            fetchSectors();
+        }
+    }, [loggedUser]);
+
 
     const handleLogout = () => {
         logout();
@@ -218,6 +261,20 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
     };
 
     const userRole = loggedUser?.role ? loggedUser.role.toUpperCase() : '';
+
+    const handleOpenProfileModal = () => setIsProfileModalOpen(true);
+    const handleCloseProfileModal = () => setIsProfileModalOpen(false);
+
+
+    // ✅ FUNÇÃO ATUALIZADA: Agora usa a função global que gerencia o estado E o localStorage
+    const handleUserUpdateAndCloseModal = (updatedUser) => {
+        // 1. CHAVE: Usa a função exportada do App.js para atualizar o estado e o localStorage
+        updateLoggedUserGlobally(updatedUser);
+        
+        // 2. Fecha a modal de edição
+        handleCloseProfileModal();
+    };
+
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#fafafa' }}>
@@ -230,11 +287,11 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                 navigate={navigate}
             />
 
-            {/* Passa pageTitle e pageSubtitle para o FixedHeader */}
             <FixedHeader
                 loggedUser={loggedUser}
                 pageTitle={pageTitle}
                 pageSubtitle={pageSubtitle}
+                onOpenProfileModal={handleOpenProfileModal}
             />
 
             <Box
@@ -243,7 +300,6 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                     flexGrow: 1,
                     ml: `${drawerWidth}px`,
                     width: `calc(100% - ${drawerWidth}px)`,
-                    // O pt garante que o conteúdo não fique escondido atrás do header fixo
                     pt: `${HEADER_HEIGHT + 24}px`,
                     pb: 4,
                     position: 'relative',
@@ -251,10 +307,28 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
             >
 
                 <Container maxWidth="xl" sx={{ pt: 0, pb: 0 }}>
-                    {/* O children agora é renderizado logo abaixo do espaço reservado pelo header */}
                     {children}
                 </Container>
             </Box>
+
+            {/* ✅ Renderiza o Modal de Edição de Perfil usando UserEditForm */}
+            <Modal
+                open={isProfileModalOpen}
+                onClose={handleCloseProfileModal}
+                aria-labelledby="profile-edit-modal-title"
+                aria-describedby="profile-edit-modal-description"
+            >
+                <Box sx={modalStyle}>
+                    <UserFormEdit
+                        sectors={sectors} // Passa a lista de setores (vazia ou completa)
+                        currentUser={loggedUser} // O usuário sendo editado é o próprio loggedUser
+                        onFinish={handleCloseProfileModal} // ✅ Usado para o botão 'Cancelar'
+                        isSelfEdit={true} // ✅ Define o formulário no modo de auto-edição
+                        // ✅ ATUALIZADO: Passa a nova função que faz o update E fecha a modal
+                        onUserUpdate={handleUserUpdateAndCloseModal} 
+                    />
+                </Box>
+            </Modal>
         </Box>
     );
 }

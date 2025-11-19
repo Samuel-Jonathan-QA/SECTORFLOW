@@ -34,14 +34,14 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({ error: 'Credenciais inválidas.' });
+            return res.status(400).json({ error: 'E-mail ou senha incorretos! \n Verifique suas credenciais.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             // Usa 400 (Bad Request) para falha de login (senha incorreta)
-            return res.status(400).json({ error: 'Credenciais inválidas.' });
+            return res.status(400).json({ error: 'E-mail ou senha incorretos! \n Verifique suas credenciais.' });
         }
 
         const token = generateToken(user.id);

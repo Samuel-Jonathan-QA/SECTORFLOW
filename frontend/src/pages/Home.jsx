@@ -8,7 +8,6 @@ import {
 } from '@mui/material';
 import API from '../api';
 import { toast } from 'react-toastify';
-
 import logoImage from '../assets/logo1.png';
 
 
@@ -30,7 +29,12 @@ function UserLogin({ setLoggedUser }) {
 
         } catch (error) {
             console.error('Erro de login:', error.response?.data || error);
-            toast.error(error.response?.data?.error || 'Erro de autenticação. Verifique suas credenciais.');
+            toast.error(
+                error.response?.data?.error || 'Erro de autenticação. Verifique suas credenciais.',
+                {
+                    style: { whiteSpace: 'pre-line' }
+                }
+            );
         }
     };
 

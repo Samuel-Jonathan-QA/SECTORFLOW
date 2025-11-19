@@ -82,7 +82,6 @@ function DashboardPage({ loggedUser }) {
         { 
             label: 'Total de Produtos', 
             count: products.length, 
-            path: '/products', 
             icon: InventoryIcon, 
             color: '#4caf50', 
             iconBg: '#e8f5e9' 
@@ -91,7 +90,6 @@ function DashboardPage({ loggedUser }) {
             { 
                 label: 'Total de Setores', 
                 count: sectors.length, 
-                path: '/sectors', 
                 icon: CategoryIcon, 
                 color: '#8e24aa', 
                 iconBg: '#f3e5f5' 
@@ -99,7 +97,6 @@ function DashboardPage({ loggedUser }) {
             { 
                 label: 'Total de Usuários', 
                 count: users.length, 
-                path: '/users', 
                 icon: GroupIcon, 
                 color: '#ff9800', 
                 iconBg: '#fff3e0' 
@@ -109,7 +106,6 @@ function DashboardPage({ loggedUser }) {
         {
             label: 'Valor em Estoque', 
             count: totalStockValueFormatted, 
-            path: '/products', 
             isCurrency: true, 
             icon: PaidIcon, 
             color: '#00bcd4', 
@@ -141,7 +137,6 @@ function DashboardPage({ loggedUser }) {
                     p: 3,
                     height: '100%',
                     borderRadius: 2,
-                    cursor: 'pointer',
                     border: '1px solid #f0f0f0',
                     transition: 'all 0.2s ease-in-out',
                     position: 'relative', 
