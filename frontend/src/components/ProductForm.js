@@ -1,5 +1,7 @@
+// frontend/src/components/ProductForm.js
+
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, MenuItem, Paper } from '@mui/material';
+import { TextField, Button, MenuItem, Paper, Typography, Box } from '@mui/material'; // ✅ Adicionado Box e Typography
 import API from '../api';
 import { toast } from 'react-toastify'; 
 
@@ -11,7 +13,15 @@ const MAX_QUANTITY = 999999999;
 const MIN_NAME_LENGTH = 3;
 const MAX_NAME_LENGTH = 150; 
 const MIN_DESC_LENGTH = 3;
-const MAX_DESC_LENGTH = 500; 
+const MAX_DESC_LENGTH = 500; // O limite máximo para o contador
+
+// NOVO: Regex para validação de conteúdo
+// Permite letras (acentuadas), números, espaços, hífens, apóstrofos e vírgulas.
+const VALID_NAME_CONTENT_REGEX = /^[a-zA-Z0-9\u00C0-\u00FF\s\-'',]*$/; 
+// Regex mais permissiva para descrição (permite pontuação comum)
+const VALID_DESC_CONTENT_REGEX = /^[a-zA-Z0-9\u00C0-\u00FF\s\.\,\!\?\-'"\(\)]*$/; 
+// Garante que o nome ou descrição tenha pelo menos uma letra
+const HAS_LETTERS_REGEX = /[a-zA-Z\u00C0-\u00FF]/;
 
 // Formatação para as mensagens de aviso
 const formatNumber = (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -24,8 +34,8 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
     const [description, setDescription] = useState('');
     const [sectorId, setSectorId] = useState('');
 
-    const [nameError, setNameError] = useState(false);
-    const [descError, setDescError] = useState(false);
+    const [nameError, setNameError] = useState(''); // Alterado para string para guardar a mensagem
+    const [descError, setDescError] = useState(''); // Alterado para string para guardar a mensagem
 
     useEffect(() => {
         if (currentProduct) {
@@ -38,43 +48,73 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
             setName(''); 
             setPrice(''); 
             setQuantity('');
-            setDescription('');
+            setDescription(''); 
             setSectorId('');
         }
-        setNameError(false);
-        setDescError(false);
+        setNameError('');
+        setDescError('');
     }, [currentProduct]); 
 
-    // HANDLER: Validação de Nome
+    // ✅ NOVO: Função centralizada de validação de Nome e Descrição
+    const runValidationChecks = (nameValue, descValue) => {
+        const trimmedName = nameValue.trim();
+        const descriptionLength = descValue.length;
+
+        // 1. Validação de Nome (Tamanho e Conteúdo)
+        if (!trimmedName || trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) {
+            return {
+                name: `Nome deve ter entre ${MIN_NAME_LENGTH} e ${MAX_NAME_LENGTH} caracteres.`,
+                description: ''
+            };
+        }
+
+        if (!VALID_NAME_CONTENT_REGEX.test(trimmedName)) {
+            return {
+                name: 'Nome contém caracteres inválidos. Use apenas letras, números, espaços, hífens (-) ou vírgulas (,).',
+                description: ''
+            };
+        }
+        
+        if (!HAS_LETTERS_REGEX.test(trimmedName)) {
+            return {
+                name: 'O Nome deve conter letras descritivas (não use apenas números ou símbolos).',
+                description: ''
+            };
+        }
+
+        // 2. Validação de Descrição (Tamanho e Conteúdo, se preenchida)
+        if (descriptionLength > 0) {
+             if (descriptionLength < MIN_DESC_LENGTH || descriptionLength > MAX_DESC_LENGTH) {
+                 return {
+                     name: '',
+                     description: `A Descrição deve ter entre ${MIN_DESC_LENGTH} e ${MAX_DESC_LENGTH} caracteres.`
+                 };
+             }
+             
+             if (!VALID_DESC_CONTENT_REGEX.test(descValue)) {
+                 return {
+                     name: '',
+                     description: 'Descrição contém caracteres inválidos ou incomuns. Permita-se apenas letras, números e pontuação comum (.,!?-").'
+                 };
+             }
+        }
+        
+        return { name: '', description: '' }; // Sem erros
+    };
+    
+    // HANDLER: Validação de Nome (Limpa o erro ao digitar)
     const handleNameChange = (e) => {
         const value = e.target.value;
         setName(value);
-        
-        const trimmedValue = value.trim();
-        
-        // Verifica MAX no onChange (para limitar a entrada)
-        if (trimmedValue.length > MAX_NAME_LENGTH) {
-            setNameError(true);
-            toast.warn(`Nome deve ter no máximo ${MAX_NAME_LENGTH} caracteres.`);
-        } else if (trimmedValue.length > 0 && trimmedValue.length < MIN_NAME_LENGTH) {
-            setNameError(false);
-        } else {
-            setNameError(false);
-        }
+        setNameError(''); // Limpa o erro ao digitar
     };
 
-    // HANDLER: Validação de Descrição
+    // HANDLER: Validação de Descrição (Limpa o erro ao digitar)
     const handleDescriptionChange = (e) => {
         const value = e.target.value;
+        // O inputProps={{ maxLength: MAX_DESC_LENGTH }} já limita a entrada
         setDescription(value);
-        
-        // Verifica MAX no onChange (para limitar a entrada)
-        if (value.length > MAX_DESC_LENGTH) {
-            setDescError(true);
-            toast.warn(`Descrição deve ter no máximo ${MAX_DESC_LENGTH} caracteres.`); // Mensagem atualizada
-        } else {
-            setDescError(false);
-        }
+        setDescError(''); // Limpa o erro ao digitar
     };
 
     // HANDLER: Validação e Máscara de Preço
@@ -130,35 +170,26 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
 
         const isEditing = !!currentProduct;
         
-        // Checagem de Validação do Formulário
-        const trimmedName = name.trim();
-        const descriptionLength = description.length;
-        
-        if (!trimmedName || !price || !sectorId || quantity === '') {
+        // 1. Checagem de campos obrigatórios (além de Nome e Setor, que são checados em 2)
+        if (!price || !sectorId || quantity === '') {
             toast.error('Preencha os campos obrigatórios (Nome, Preço, Quantidade e Setor).');
             return;
         }
 
-        if (trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) {
-            setNameError(true);
-            toast.error(`Nome deve ter entre ${MIN_NAME_LENGTH} e ${MAX_NAME_LENGTH} caracteres.`);
-            return;
-        }
+        // 2. Validação de Conteúdo e Tamanho (Nome, Descrição)
+        const validationErrors = runValidationChecks(name, description);
         
-        if (descriptionLength > 0 && descriptionLength < MIN_DESC_LENGTH) {
-            setDescError(true);
-            toast.error(`A Descrição deve ter no mínimo ${MIN_DESC_LENGTH} caracteres (se preenchida).`);
+        if (validationErrors.name || validationErrors.description) {
+            setNameError(validationErrors.name);
+            setDescError(validationErrors.description);
+
+            if (validationErrors.name) toast.error(validationErrors.name);
+            if (validationErrors.description) toast.error(validationErrors.description);
             return;
         }
-
-        if (descriptionLength > MAX_DESC_LENGTH) {
-             setDescError(true);
-             toast.error(`A Descrição deve ter no máximo ${MAX_DESC_LENGTH} caracteres.`);
-             return;
-        }
-        // Fim da Checagem de Validação
         
         // Prepara dados para API
+        const trimmedName = name.trim();
         const priceForApi = parseFloat(price.replace(/\./g, '').replace(',', '.'));
         
         const finalPrice = Math.min(Math.max(priceForApi, 0), MAX_PRICE);
@@ -200,6 +231,11 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
 
     const submitButtonText = currentProduct ? 'Atualizar Produto' : 'Adicionar Produto';
 
+    // ⬅️ NOVO: Lógica do Helper Text
+    const descriptionHelperText = descError // Se houver erro de validação, mostra o erro
+        ? descError
+        : `${description.length} / ${MAX_DESC_LENGTH} caracteres`; // Senão, mostra o contador
+
     return (
         <Paper elevation={3} style={{ padding: '10px' }} data-testid="product-form">
             <form onSubmit={handleSubmit}>
@@ -211,8 +247,8 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
                     fullWidth 
                     margin="normal" 
                     inputProps={{ maxLength: MAX_NAME_LENGTH }}
-                    error={nameError} // Mantém o destaque visual de erro
-                    // helperText removido
+                    error={!!nameError} // Usa !! para converter a string de erro em booleano
+                    helperText={nameError} // Mostra a mensagem de erro
                 />
                 <TextField 
                     label="Preço (R$)" 
@@ -242,8 +278,9 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
                     multiline 
                     rows={3}
                     inputProps={{ maxLength: MAX_DESC_LENGTH }}
-                    error={descError} // Mantém o destaque visual de erro
-                    // helperText removido
+                    error={!!descError} 
+                    // ⬅️ ATUALIZAÇÃO: Usa a variável que contém a mensagem de erro OU o contador
+                    helperText={descriptionHelperText} 
                 />
                 <TextField 
                     select 
@@ -256,7 +293,7 @@ function ProductForm({ sectors, onFinish, currentProduct }) {
                 >
                     {sectors.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                 </TextField>
-                <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }} disabled={nameError || descError}>
+                <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }} disabled={!!nameError || !!descError}>
                     {submitButtonText}
                 </Button>
             </form>
