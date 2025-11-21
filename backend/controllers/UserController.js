@@ -6,6 +6,52 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
+const ALLOWED_SPECIAL_CHARS = '!@#$%&*';
+
+const validatePassword = (password) => {
+    const errors = [];
+    const minLength = 8;
+    const maxLength = 32; 
+
+    if (!password) {
+        return 'A senha é obrigatória.';
+    }
+
+    if (/\s/.test(password)) {
+        errors.push('sem espaços');
+    }
+
+    if (password.length < minLength) {
+        errors.push(`mínimo de ${minLength} caracteres`);
+    }
+
+    if (password.length > maxLength) {
+        errors.push(`máximo de ${maxLength} caracteres`);
+    }
+
+    if (!/(?=.*[a-z])/.test(password)) {
+        errors.push('mínimo 1 letra minúscula');
+    }
+
+    if (!/(?=.*[A-Z])/.test(password)) {
+        errors.push('mínimo 1 letra maiúscula');
+    }
+
+    if (!/(?=.*[0-9].*[0-9])/.test(password)) {
+        errors.push('mínimo 2 números');
+    }
+
+    const specialCharRegex = new RegExp(`(?=.*[${ALLOWED_SPECIAL_CHARS.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}])`);
+    if (!specialCharRegex.test(password)) {
+        errors.push(`mínimo 1 caractere especial (${ALLOWED_SPECIAL_CHARS})`);
+    }
+
+    if (errors.length > 0) {
+        return `A senha não atende aos requisitos. Deve ter: ${errors.join(', ')}.`;
+    }
+
+    return null; 
+};
 
 const removeOldProfilePicture = (oldPath) => {
     if (oldPath && oldPath.startsWith('/uploads/profile_pictures/')) {
@@ -65,7 +111,6 @@ const createUser = async (req, res) => {
     if (sectorIdsRaw) {
         const tempArray = Array.isArray(sectorIdsRaw) ? sectorIdsRaw : Array.of(sectorIdsRaw);
 
-        // Limpa e mapeia os IDs
         sectorIdArray = tempArray
             .map(id => String(id).trim())
             .filter(id => id.length > 0);
@@ -80,7 +125,12 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
     }
 
-    // NOVA VALIDAÇÃO CRÍTICA (Baseado na regra de negócio)
+    const passwordErrorMsg = validatePassword(password);
+    if (passwordErrorMsg) {
+        if (req.file) { removeOldProfilePicture(profilePicturePath); }
+        return res.status(400).json({ error: passwordErrorMsg });
+    }
+
     const allowedRoles = ['ADMIN', 'VENDEDOR'];
     const roleUpper = role.toUpperCase();
 
@@ -110,14 +160,11 @@ const createUser = async (req, res) => {
         if (sectorIdArray.length > 0) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray } });
 
-            // **NOVA VALIDAÇÃO DE INTEGRIDADE DE DADOS**
             if (sectors.length !== sectorIdArray.length) {
-                // Se o número de setores encontrados for menor que o número de IDs enviados (ID inválido)
                 await transaction.rollback();
                 if (req.file) { removeOldProfilePicture(profilePicturePath); }
                 return res.status(400).json({ error: 'Um ou mais IDs de setor fornecidos são inválidos.' });
             }
-            // **FIM DA VALIDAÇÃO**
 
             await newUser.setSectors(sectors, { transaction });
         }
@@ -171,6 +218,13 @@ const updateUser = async (req, res) => {
         }
 
         if (password) {
+            // **VALIDAÇÃO DA SENHA**
+            const passwordErrorMsg = validatePassword(password);
+            if (passwordErrorMsg) {
+                if (req.file) { removeOldProfilePicture(newFilePath); }
+                await transaction.rollback();
+                return res.status(400).json({ error: passwordErrorMsg });
+            }
             updateData.password = password;
         }
 
@@ -189,7 +243,6 @@ const updateUser = async (req, res) => {
 
         const roleToCheck = updateData.role ? updateData.role.toUpperCase() : userToUpdate.role.toUpperCase();
 
-        // NOVA VALIDAÇÃO CRÍTICA (Para UPDATE)
         const allowedRoles = ['ADMIN', 'VENDEDOR'];
 
         if (!allowedRoles.includes(roleToCheck)) {
@@ -200,7 +253,7 @@ const updateUser = async (req, res) => {
             });
         }
 
-        if (updateData.role) { // Garante que a role salva será em caixa alta
+        if (updateData.role) {
             updateData.role = roleToCheck;
         }
 
@@ -232,14 +285,11 @@ const updateUser = async (req, res) => {
         if (sectorIdsRaw !== undefined) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray }, transaction });
 
-            // **NOVA VALIDAÇÃO DE INTEGRIDADE DE DADOS (UPDATE)**
             if (sectors.length !== sectorIdArray.length) {
-                // Se o número de setores encontrados for menor que o número de IDs enviados (ID inválido)
                 await transaction.rollback();
                 if (req.file) { removeOldProfilePicture(newFilePath); }
                 return res.status(400).json({ error: 'Um ou mais IDs de setor fornecidos são inválidos.' });
             }
-            // **FIM DA VALIDAÇÃO**
 
             await userToUpdate.setSectors(sectors, { transaction });
         }
