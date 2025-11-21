@@ -102,13 +102,23 @@ const createUser = async (req, res) => {
         const newUser = await User.create({
             email,
             password,
-            role: roleUpper, // Usa a role normalizada
+            role: roleUpper,
             profilePicture: profilePicturePath,
             ...rest
         }, { transaction });
 
         if (sectorIdArray.length > 0) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray } });
+
+            // **NOVA VALIDAÇÃO DE INTEGRIDADE DE DADOS**
+            if (sectors.length !== sectorIdArray.length) {
+                // Se o número de setores encontrados for menor que o número de IDs enviados (ID inválido)
+                await transaction.rollback();
+                if (req.file) { removeOldProfilePicture(profilePicturePath); }
+                return res.status(400).json({ error: 'Um ou mais IDs de setor fornecidos são inválidos.' });
+            }
+            // **FIM DA VALIDAÇÃO**
+
             await newUser.setSectors(sectors, { transaction });
         }
 
@@ -221,6 +231,16 @@ const updateUser = async (req, res) => {
 
         if (sectorIdsRaw !== undefined) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray }, transaction });
+
+            // **NOVA VALIDAÇÃO DE INTEGRIDADE DE DADOS (UPDATE)**
+            if (sectors.length !== sectorIdArray.length) {
+                // Se o número de setores encontrados for menor que o número de IDs enviados (ID inválido)
+                await transaction.rollback();
+                if (req.file) { removeOldProfilePicture(newFilePath); }
+                return res.status(400).json({ error: 'Um ou mais IDs de setor fornecidos são inválidos.' });
+            }
+            // **FIM DA VALIDAÇÃO**
+
             await userToUpdate.setSectors(sectors, { transaction });
         }
 
