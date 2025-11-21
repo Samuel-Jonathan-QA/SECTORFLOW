@@ -8,10 +8,20 @@ const path = require('path');
 
 const ALLOWED_SPECIAL_CHARS = '!@#$%&*';
 
+const EMAIL_REGEX = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+const isValidEmail = (email) => {
+    const trimmedEmail = email ? String(email).trim() : '';
+
+    if (!trimmedEmail) return false;
+
+    return EMAIL_REGEX.test(trimmedEmail);
+};
+
 const validatePassword = (password) => {
     const errors = [];
     const minLength = 8;
-    const maxLength = 32; 
+    const maxLength = 32;
 
     if (!password) {
         return 'A senha é obrigatória.';
@@ -50,7 +60,7 @@ const validatePassword = (password) => {
         return `A senha não atende aos requisitos. Deve ter: ${errors.join(', ')}.`;
     }
 
-    return null; 
+    return null;
 };
 
 const removeOldProfilePicture = (oldPath) => {
@@ -125,6 +135,11 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
     }
 
+    if (!isValidEmail(email)) {
+        if (req.file) { removeOldProfilePicture(profilePicturePath); }
+        return res.status(400).json({ error: 'O formato do email é inválido.' });
+    }
+
     const passwordErrorMsg = validatePassword(password);
     if (passwordErrorMsg) {
         if (req.file) { removeOldProfilePicture(profilePicturePath); }
@@ -146,11 +161,13 @@ const createUser = async (req, res) => {
         return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
     }
 
+    const trimmedEmail = email.trim();
+
     try {
         transaction = await sequelize.transaction();
 
         const newUser = await User.create({
-            email,
+            email: trimmedEmail, 
             password,
             role: roleUpper,
             profilePicture: profilePicturePath,
@@ -198,7 +215,7 @@ const updateUser = async (req, res) => {
 
     let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds;
 
-    const { password, profilePictureRemove, ...updateData } = req.body;
+    const { email, password, profilePictureRemove, ...updateData } = req.body;
 
     let transaction;
 
@@ -217,8 +234,16 @@ const updateUser = async (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
 
+        if (email !== undefined) {
+            if (!isValidEmail(email)) {
+                if (req.file) { removeOldProfilePicture(newFilePath); }
+                await transaction.rollback();
+                return res.status(400).json({ error: 'O formato do email é inválido.' });
+            }
+            updateData.email = email.trim();
+        }
+
         if (password) {
-            // **VALIDAÇÃO DA SENHA**
             const passwordErrorMsg = validatePassword(password);
             if (passwordErrorMsg) {
                 if (req.file) { removeOldProfilePicture(newFilePath); }
@@ -240,6 +265,8 @@ const updateUser = async (req, res) => {
         }
 
         updateData.profilePicture = profilePictureToSave;
+
+        const emailToCheck = updateData.email || userToUpdate.email;
 
         const roleToCheck = updateData.role ? updateData.role.toUpperCase() : userToUpdate.role.toUpperCase();
 
@@ -309,6 +336,10 @@ const updateUser = async (req, res) => {
 
         if (req.file) {
             removeOldProfilePicture(newFilePath);
+        }
+
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ error: 'O email fornecido já está em uso.' });
         }
 
         console.error('Erro ao atualizar usuário:', error.message);
