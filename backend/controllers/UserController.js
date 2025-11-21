@@ -1,8 +1,8 @@
-const User = require('../models/User'); 
-const Sector = require('../models/Sector'); 
-const { sequelize } = require('../config/database'); 
+const User = require('../models/User');
+const Sector = require('../models/Sector');
+const { sequelize } = require('../config/database');
 
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,7 +11,7 @@ const removeOldProfilePicture = (oldPath) => {
     if (oldPath && oldPath.startsWith('/uploads/profile_pictures/')) {
         const filename = path.basename(oldPath);
         const filePath = path.join(__dirname, '..', 'uploads', 'profile_pictures', filename);
-        
+
         try {
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
@@ -25,7 +25,7 @@ const removeOldProfilePicture = (oldPath) => {
 
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.findAll({ 
+        const users = await User.findAll({
             attributes: { exclude: ['password'] },
             include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
         });
@@ -56,49 +56,60 @@ const getOneUser = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds; 
-    
-    const { email, password, role, ...rest } = req.body; 
-    let transaction; 
+    let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds;
+
+    const { email, password, role, ...rest } = req.body;
+    let transaction;
 
     let sectorIdArray = [];
     if (sectorIdsRaw) {
         const tempArray = Array.isArray(sectorIdsRaw) ? sectorIdsRaw : Array.of(sectorIdsRaw);
-        
+
         // Limpa e mapeia os IDs
         sectorIdArray = tempArray
             .map(id => String(id).trim())
             .filter(id => id.length > 0);
     }
-    
-    const profilePicturePath = req.file 
-        ? `/uploads/profile_pictures/${req.file.filename}` 
+
+    const profilePicturePath = req.file
+        ? `/uploads/profile_pictures/${req.file.filename}`
         : null;
 
-    if (!email || !password || !role) { 
+    if (!email || !password || !role) {
         if (req.file) { removeOldProfilePicture(profilePicturePath); }
         return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
     }
 
-    if (role.toUpperCase() === 'VENDEDOR' && sectorIdArray.length === 0) {
+    // NOVA VALIDAÇÃO CRÍTICA (Baseado na regra de negócio)
+    const allowedRoles = ['ADMIN', 'VENDEDOR'];
+    const roleUpper = role.toUpperCase();
+
+    if (!allowedRoles.includes(roleUpper)) {
+        if (req.file) { removeOldProfilePicture(profilePicturePath); }
+        return res.status(400).json({
+            error: `Role inválida. Valores aceitos: ${allowedRoles.join(', ')}.`
+        });
+    }
+
+    if (roleUpper === 'VENDEDOR' && sectorIdArray.length === 0) {
         if (req.file) { removeOldProfilePicture(profilePicturePath); }
         return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
     }
 
     try {
         transaction = await sequelize.transaction();
-        
-        const newUser = await User.create({ 
-            email, 
-            password, 
-            role, 
-            profilePicture: profilePicturePath, 
-            ...rest 
-        }, { transaction }); 
+
+        const newUser = await User.create({
+            email,
+            password,
+            role: roleUpper, // Usa a role normalizada
+            profilePicture: profilePicturePath,
+            ...rest
+        }, { transaction });
 
         if (sectorIdArray.length > 0) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray } });
-            await newUser.setSectors(sectors, { transaction }); 
+            await newUser.setSectors(sectors, { transaction });
         }
 
         await transaction.commit();
@@ -107,14 +118,14 @@ const createUser = async (req, res) => {
             attributes: { exclude: ['password'] },
             include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
         });
-        
-        return res.status(201).json(userWithSectors); 
+
+        return res.status(201).json(userWithSectors);
 
     } catch (error) {
-        if (transaction) await transaction.rollback(); 
-        
-        if (req.file) { 
-            removeOldProfilePicture(profilePicturePath); 
+        if (transaction) await transaction.rollback();
+
+        if (req.file) {
+            removeOldProfilePicture(profilePicturePath);
         }
 
         if (error.name === 'SequelizeUniqueConstraintError') {
@@ -127,22 +138,22 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    
-    let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds; 
 
-    const { password, profilePictureRemove, ...updateData } = req.body; 
-    
+    let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds;
+
+    const { password, profilePictureRemove, ...updateData } = req.body;
+
     let transaction;
-    
-    const newFilePath = req.file 
-        ? `/uploads/profile_pictures/${req.file.filename}` 
+
+    const newFilePath = req.file
+        ? `/uploads/profile_pictures/${req.file.filename}`
         : null;
 
     try {
         transaction = await sequelize.transaction();
 
         const userToUpdate = await User.findByPk(id, { transaction });
-        
+
         if (!userToUpdate) {
             if (req.file) { removeOldProfilePicture(newFilePath); }
             await transaction.rollback();
@@ -150,53 +161,67 @@ const updateUser = async (req, res) => {
         }
 
         if (password) {
-            updateData.password = password; 
+            updateData.password = password;
         }
-        
+
         let profilePictureToSave = userToUpdate.profilePicture;
 
         if (req.file) {
             removeOldProfilePicture(userToUpdate.profilePicture);
             profilePictureToSave = newFilePath;
-            
+
         } else if (profilePictureRemove === 'true') {
             removeOldProfilePicture(userToUpdate.profilePicture);
             profilePictureToSave = null;
-        } 
-        
+        }
+
         updateData.profilePicture = profilePictureToSave;
 
-        const roleToCheck = updateData.role || userToUpdate.role;
+        const roleToCheck = updateData.role ? updateData.role.toUpperCase() : userToUpdate.role.toUpperCase();
 
+        // NOVA VALIDAÇÃO CRÍTICA (Para UPDATE)
+        const allowedRoles = ['ADMIN', 'VENDEDOR'];
+
+        if (!allowedRoles.includes(roleToCheck)) {
+            if (req.file) { removeOldProfilePicture(newFilePath); }
+            await transaction.rollback();
+            return res.status(400).json({
+                error: `Role inválida. Valores aceitos: ${allowedRoles.join(', ')}.`
+            });
+        }
+
+        if (updateData.role) { // Garante que a role salva será em caixa alta
+            updateData.role = roleToCheck;
+        }
 
         let sectorIdArray = [];
         let shouldValidateSector = false;
 
-        if (sectorIdsRaw !== undefined) { 
+        if (sectorIdsRaw !== undefined) {
             shouldValidateSector = true;
             const tempArray = Array.isArray(sectorIdsRaw) ? sectorIdsRaw : Array.of(sectorIdsRaw);
-            
+
             sectorIdArray = tempArray
                 .map(id => String(id).trim())
                 .filter(id => id.length > 0);
         }
-        
-        if (roleToCheck.toUpperCase() === 'VENDEDOR' && shouldValidateSector && sectorIdArray.length === 0) {
-             if (req.file) { removeOldProfilePicture(newFilePath); }
-             await transaction.rollback();
-             return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
+
+        if (roleToCheck === 'VENDEDOR' && shouldValidateSector && sectorIdArray.length === 0) {
+            if (req.file) { removeOldProfilePicture(newFilePath); }
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Vendedores devem ser associados a pelo menos um setor.' });
         }
 
 
-        const [updatedRows] = await User.update(updateData, { 
+        const [updatedRows] = await User.update(updateData, {
             where: { id },
             individualHooks: true,
             transaction
         });
-        
-        if (sectorIdsRaw !== undefined) { 
+
+        if (sectorIdsRaw !== undefined) {
             const sectors = await Sector.findAll({ where: { id: sectorIdArray }, transaction });
-            await userToUpdate.setSectors(sectors, { transaction }); 
+            await userToUpdate.setSectors(sectors, { transaction });
         }
 
 
@@ -206,14 +231,14 @@ const updateUser = async (req, res) => {
             attributes: { exclude: ['password'] },
             include: [{ model: Sector, as: 'Sectors', attributes: ['id', 'name'] }]
         });
-        
+
         return res.status(200).json(updatedUser);
 
     } catch (error) {
         if (transaction) await transaction.rollback();
-        
-        if (req.file) { 
-             removeOldProfilePicture(newFilePath);
+
+        if (req.file) {
+            removeOldProfilePicture(newFilePath);
         }
 
         console.error('Erro ao atualizar usuário:', error.message);
@@ -230,12 +255,12 @@ const deleteUser = async (req, res) => {
         if (!userToDelete) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
-        
+
         removeOldProfilePicture(userToDelete.profilePicture);
 
         const deletedRows = await User.destroy({ where: { id } });
 
-        return res.status(204).send(); 
+        return res.status(204).send();
     } catch (error) {
         console.error('Erro ao deletar usuário:', error.message);
         return res.status(500).json({ error: 'Não foi possível deletar o usuário.' });
@@ -243,9 +268,9 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
-    getAllUsers, 
+    getAllUsers,
     getOneUser,
-    createUser, 
+    createUser,
     updateUser,
     deleteUser
 };
