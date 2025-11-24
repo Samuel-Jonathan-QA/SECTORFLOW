@@ -38,11 +38,9 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-
 router.get('/', protect, checkRole(['ADMIN']), UserController.getAllUsers);
 router.post('/', protect, checkRole(['ADMIN']), upload.single('profilePicture'), UserController.createUser);
-router.put('/:id', protect, checkRole(['ADMIN']), upload.single('profilePicture'), UserController.updateUser);
+router.put('/:id', protect, upload.single('profilePicture'), UserController.updateUser); 
 router.delete('/:id', protect, checkRole(['ADMIN']), UserController.deleteUser);
-
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect, useCallback } from 'react'; 
 import {
     Box, List, ListItem, ListItemText, ListItemIcon, Typography,
     Button, CssBaseline, Container, Divider, Avatar, AppBar, Toolbar, Modal, Paper,
@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { logout } from '../api';
 import API from '../api'; 
 
-import { updateLoggedUserGlobally } from '../App'; 
+import { updateLoggedUserGlobally, triggerUserListUpdate } from '../App';
 
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -17,7 +17,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import GroupIcon from '@mui/icons-material/Group';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SectorFlowLogo from '../assets/logo1.png';
-import UserFormEdit from './UserFormEdit'; 
+import UserForm from './UserForm'; 
 
 const drawerWidth = 200;
 const HEADER_HEIGHT = 64;
@@ -192,8 +192,10 @@ const Sidebar = ({ userRole, loggedUser, handleOpenLogoutModal, navigate }) => {
 };
 
 const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }) => {
+    const cacheBuster = loggedUser?.profilePicture ? `?t=${Date.now()}` : '';
+
     const profileSrc = loggedUser?.profilePicture
-        ? `${BACKEND_URL}${loggedUser.profilePicture}`
+        ? `${BACKEND_URL}${loggedUser.profilePicture}${cacheBuster}`
         : undefined;
 
     return (
@@ -259,7 +261,10 @@ const FixedHeader = ({ loggedUser, pageTitle, pageSubtitle, onOpenProfileModal }
                         src={profileSrc}
                         sx={{ width: 40, height: 40, fontSize: 18 }}
                     >
-                        {!loggedUser?.profilePicture && loggedUser?.name ? loggedUser.name[0].toUpperCase() : <AccountCircleIcon sx={{ color: '#ffffff' }} />}
+                        {(!loggedUser?.profilePicture && loggedUser?.name) 
+                            ? loggedUser.name[0].toUpperCase() 
+                            : <AccountCircleIcon sx={{ color: '#ffffff' }} />
+                        }
                     </Avatar>
                 </Box>
             </Toolbar>
@@ -314,13 +319,15 @@ const modalStyle = {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: '90%',
-    maxWidth: 400,
+    width: '90%', 
+    maxWidth: 500, 
     bgcolor: 'background.paper',
     boxShadow: 24,
     p: 0,
     borderRadius: 2,
     outline: 'none',
+    maxHeight: '95vh', 
+    overflowY: 'hidden', 
 };
 
 
@@ -330,25 +337,25 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [sectors, setSectors] = useState([]); 
 
-    useEffect(() => {
-        const fetchSectors = async () => {
-            try {
-                const response = await API.get('/sectors');
-                setSectors(response.data);
-            } catch (error) {
-                console.error("Erro ao buscar setores:", error);
-                if (loggedUser?.role !== 'ADMIN') {
-                    setSectors(loggedUser?.Sectors || []); 
-                } else {
-                    setSectors([]); 
-                }
+    const fetchSectors = useCallback(async () => {
+        try {
+            const response = await API.get('/sectors');
+            setSectors(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar setores:", error);
+            if (loggedUser?.role !== 'ADMIN') {
+                setSectors(loggedUser?.Sectors || []); 
+            } else {
+                setSectors([]); 
             }
-        };
+        }
+    }, [loggedUser]); 
 
+    useEffect(() => {
         if (loggedUser) {
             fetchSectors();
         }
-    }, [loggedUser]);
+    }, [loggedUser, fetchSectors]); 
 
     const handleOpenLogoutModal = () => setIsLogoutModalOpen(true);
     const handleCloseLogoutModal = () => setIsLogoutModalOpen(false);
@@ -365,9 +372,12 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
     const handleOpenProfileModal = () => setIsProfileModalOpen(true);
     const handleCloseProfileModal = () => setIsProfileModalOpen(false);
 
-
     const handleUserUpdateAndCloseModal = (updatedUser) => {
-        updateLoggedUserGlobally(updatedUser);
+        updateLoggedUserGlobally(updatedUser); 
+        
+        triggerUserListUpdate();
+        
+        // Fecha o modal.
         handleCloseProfileModal();
     };
 
@@ -397,7 +407,7 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
                     ml: `${drawerWidth}px`,
                     width: `calc(100% - ${drawerWidth}px)`,
                     pt: `${HEADER_HEIGHT + 24}px`,
-                    pb: `${FOOTER_HEIGHT + 16}px`, // Ajusta o padding bottom para garantir espaço
+                    pb: `${FOOTER_HEIGHT + 16}px`,
                     position: 'relative',
                 }}
             >
@@ -411,18 +421,37 @@ function Layout({ loggedUser, setLoggedUser, children, pageTitle, pageSubtitle }
 
             <Modal
                 open={isProfileModalOpen}
-                onClose={handleCloseProfileModal}
+                disableEscapeKeyDown={true} 
                 aria-labelledby="profile-edit-modal-title"
                 aria-describedby="profile-edit-modal-description"
             >
                 <Box sx={modalStyle}>
-                    <UserFormEdit
-                        sectors={sectors} 
-                        currentUser={loggedUser} 
-                        onFinish={handleCloseProfileModal} 
-                        isSelfEdit={true} 
-                        onUserUpdate={handleUserUpdateAndCloseModal} 
-                    />
+                    <Typography 
+                        variant="h6" 
+                        id="profile-edit-modal-title" 
+                        sx={{ 
+                            p: 2, 
+                            fontWeight: 'bold', 
+                            color: '#424242'
+                        }}
+                    >
+                        Editar Meu Perfil
+                    </Typography>
+                    
+                    <Box sx={{ 
+                    p: 2,
+                        maxHeight: 'calc(95vh - 60px)', 
+                        overflowY: 'auto', 
+                        paddingBottom: '0px !important'
+                    }}>
+                        <UserForm
+                            sectors={sectors} 
+                            currentUser={loggedUser} 
+                            onFinish={handleCloseProfileModal} 
+                            isSelfEdit={true} 
+                            onUserUpdate={handleUserUpdateAndCloseModal} 
+                        />
+                    </Box>
                 </Box>
             </Modal>
             

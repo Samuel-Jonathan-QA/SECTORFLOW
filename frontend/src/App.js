@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'r
 import { ThemeProvider, createTheme, CircularProgress } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 
-import API, { logout, setLogoutHandler } from './api'; 
+import API, { logout, setLogoutHandler } from './api';
 import Layout from './components/Layout';
 
 import DashboardPage from './pages/DashboardPage';
@@ -10,28 +10,29 @@ import SetoresPage from './pages/SetoresPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ProdutosPage from './pages/ProdutosPage';
 import Home from './pages/Home';
-import { ToastContainer, toast } from 'react-toastify'; 
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
-import NotFoundRedirect from './components/NotFoundRedirect'; 
+import NotFoundRedirect from './components/NotFoundRedirect';
 
 let globalSetLoggedUser = null;
+let globalUserListUpdateCallback = null;
 
 export const updateLoggedUserGlobally = (newUserData) => {
     if (globalSetLoggedUser && newUserData) {
         try {
             const storedUser = JSON.parse(localStorage.getItem('loggedUser') || '{}');
-            
-            const finalUserData = { 
+
+            const finalUserData = {
                 ...storedUser,
-                ...newUserData 
+                ...newUserData
             };
 
             localStorage.setItem('loggedUser', JSON.stringify(finalUserData));
-            
+
             globalSetLoggedUser(finalUserData);
-            
+
             console.log("Usuário atualizado globalmente.");
 
         } catch (error) {
@@ -43,14 +44,24 @@ export const updateLoggedUserGlobally = (newUserData) => {
     }
 };
 
+export const setUserListUpdateCallback = (callback) => {
+    globalUserListUpdateCallback = callback;
+};
+
+export const triggerUserListUpdate = () => {
+    if (globalUserListUpdateCallback) {
+        globalUserListUpdateCallback();
+    }
+};
+
 
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#187bbd', 
+            main: '#187bbd',
         },
         secondary: {
-            main: '#f44336', 
+            main: '#f44336',
         },
     },
     typography: {
@@ -59,7 +70,7 @@ const theme = createTheme({
 });
 
 function AppContent() {
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
 
     const [loggedUser, setLoggedUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -67,10 +78,10 @@ function AppContent() {
     const performAppLogout = () => {
         logout();
         setLoggedUser(null);
-        toast.error("Sessão expirada. Faça login novamente."); 
-        navigate('/'); 
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate('/');
     };
-    
+
     useEffect(() => {
         globalSetLoggedUser = setLoggedUser;
 
@@ -85,12 +96,12 @@ function AppContent() {
             }
         }
         setIsLoading(false);
-    }, []); 
-    
+    }, []);
+
     useEffect(() => {
         setLogoutHandler(performAppLogout);
-    }, [navigate]); 
-    
+    }, [navigate]);
+
     const getUserRole = () => loggedUser?.role;
     const getUserSectorIds = () => loggedUser?.sectorIds || [];
 
@@ -108,7 +119,7 @@ function AppContent() {
                 path="/"
                 element={<Home loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
             />
-            
+
             <Route
                 path="/dashboard"
                 element={
@@ -133,7 +144,7 @@ function AppContent() {
                             loggedUser={loggedUser}
                             setLoggedUser={setLoggedUser}
                             pageTitle="Gerenciamento de Setores"
-                            pageSubtitle="Visualize e gerencie os setores." 
+                            pageSubtitle="Visualize e gerencie os setores."
                         >
                             <SetoresPage userRole={getUserRole()} />
                         </Layout>
@@ -149,9 +160,12 @@ function AppContent() {
                             loggedUser={loggedUser}
                             setLoggedUser={setLoggedUser}
                             pageTitle="Gerenciamento de Usuários"
-                            pageSubtitle="Visualize e gerencie os usuários." 
+                            pageSubtitle="Visualize e gerencie os usuários."
                         >
-                            <UsuariosPage userRole={getUserRole()} />
+                            <UsuariosPage
+                                loggedUser={loggedUser}
+                                userRole={getUserRole()}
+                            />
                         </Layout>
                     </ProtectedRoute>
                 }
@@ -165,7 +179,7 @@ function AppContent() {
                             loggedUser={loggedUser}
                             setLoggedUser={setLoggedUser}
                             pageTitle="Gerenciamento de Produtos"
-                            pageSubtitle="Visualize e gerencie os produtos." 
+                            pageSubtitle="Visualize e gerencie os produtos."
                         >
                             <ProdutosPage
                                 loggedUser={loggedUser}

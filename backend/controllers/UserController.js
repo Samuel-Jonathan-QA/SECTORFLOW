@@ -211,7 +211,13 @@ const createUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; 
+
+    const loggedInUser = req.user; 
+
+    if (loggedInUser.role !== 'ADMIN' && String(loggedInUser.id) !== String(id)) {
+        return res.status(403).json({ error: 'Acesso negado. Permissão insuficiente.' });
+    }
 
     let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds;
 
@@ -269,6 +275,13 @@ const updateUser = async (req, res) => {
         const emailToCheck = updateData.email || userToUpdate.email;
 
         const roleToCheck = updateData.role ? updateData.role.toUpperCase() : userToUpdate.role.toUpperCase();
+
+        if (loggedInUser.role !== 'ADMIN' && updateData.role && updateData.role.toUpperCase() !== loggedInUser.role) {
+             if (req.file) { removeOldProfilePicture(newFilePath); }
+             await transaction.rollback();
+             return res.status(403).json({ error: 'Acesso negado. Você não pode alterar sua própria função (role).' });
+        }
+
 
         const allowedRoles = ['ADMIN', 'VENDEDOR'];
 
