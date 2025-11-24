@@ -4,7 +4,7 @@ import {
     TableSortLabel, TablePagination,
     Typography, Paper, IconButton, Box, Divider,
     TextField, FormControl, InputLabel, Select, MenuItem,
-    Grid, Avatar
+    Grid, Avatar, Tooltip, Chip 
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -20,7 +20,8 @@ const roleMap = {
 function descendingComparator(a, b, orderBy) {
     const getComparisonValue = (item, key) => {
         if (key === 'sectorName') {
-            return item.sectors?.[0]?.name?.toLowerCase() || '';
+            const sectorNames = item.Sectors?.map(s => s.name).join(', ') || '';
+            return sectorNames.toLowerCase();
         }
         if (key === 'role') {
             return (roleMap[item.role] || item.role)?.toLowerCase() || '';
@@ -245,16 +246,39 @@ function UserList({
                             sortedFilteredUsers
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((user) => {
-                                    const sectorName = user.sectors && user.sectors.length > 0
-                                        ? user.sectors[0].name
-                                        : 'N/A';
-
+                                    
                                     const cacheBuster = user.profilePicture ? `?t=${Date.now()}` : '';
 
                                     const profileSrc = user.profilePicture
                                         ? `${BACKEND_URL}${user.profilePicture}${cacheBuster}`
                                         : undefined;
 
+                                    const fullName = user.name || '';
+                                    const firstName = fullName.split(' ')[0];
+                                    
+                                    let displaySectorName;
+                                    let displayTooltip;
+                                    let additionalSectorsCount = 0;
+
+                                    if (user.role === 'ADMIN') {
+                                        displaySectorName = 'Acesso Global'; 
+                                        displayTooltip = 'Administrador possui acesso a todos os setores.';
+                                    } else {
+                                        const sectors = user.Sectors || [];
+                                        
+                                        displayTooltip = sectors.length > 0
+                                            ? sectors.map(sector => sector.name).join(', ')
+                                            : 'N/A';
+                                            
+                                        displaySectorName = sectors.length > 0
+                                            ? sectors[0].name
+                                            : 'N/A';
+                                            
+                                        additionalSectorsCount = sectors.length > 1
+                                            ? sectors.length - 1
+                                            : 0;
+                                    }
+                                    
                                     return (
                                         <TableRow
                                             hover
@@ -278,7 +302,12 @@ function UserList({
                                                     >
                                                         {!user.profilePicture && user.name ? user.name[0].toUpperCase() : <AccountCircleIcon sx={{ fontSize: 18 }} />}
                                                     </Avatar>
-                                                    <Typography variant="body2" noWrap>{user.name}</Typography>
+                                                    
+                                                    <Tooltip title={fullName} placement="top" arrow>
+                                                        <Typography variant="body2" noWrap>
+                                                            {fullName.includes(' ') ? firstName : fullName}
+                                                        </Typography>
+                                                    </Tooltip>
                                                 </Box>
                                             </TableCell>
 
@@ -291,7 +320,35 @@ function UserList({
                                             </TableCell>
 
                                             <TableCell align="left">
-                                                <Typography variant="body2">{sectorName}</Typography>
+                                                <Tooltip title={displayTooltip} placement="top" arrow>
+                                                    <Box sx={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        gap: 1, 
+                                                        whiteSpace: 'nowrap', 
+                                                    }}>
+                                                        <Typography variant="body2" noWrap>
+                                                            {displaySectorName}
+                                                        </Typography>
+
+                                                        {user.role !== 'ADMIN' && additionalSectorsCount > 0 && (
+                                                            <Chip
+                                                                label={`+${additionalSectorsCount}`}
+                                                                size="small"
+                                                                sx={{ 
+                                                                    height: 20, 
+                                                                    fontSize: '0.65rem', 
+                                                                    fontWeight: 'bold',
+                                                                    bgcolor: '#e0e0e0', 
+                                                                    color: '#424242',
+                                                                    '& .MuiChip-label': {
+                                                                        px: 1, 
+                                                                    }
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Box>
+                                                </Tooltip>
                                             </TableCell>
 
                                             <TableCell align="left">
@@ -321,7 +378,6 @@ function UserList({
                 </Table>
             </TableContainer>
 
-            {/* Paginação */}
             <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
