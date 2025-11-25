@@ -14,7 +14,7 @@ const generateToken = (id) => {
     }
 
     return jwt.sign({ id }, secret, {
-        expiresIn: '2h', 
+        expiresIn: '8h', 
     });
 };
 

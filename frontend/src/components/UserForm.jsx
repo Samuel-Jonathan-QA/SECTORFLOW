@@ -58,7 +58,7 @@ const validatePassword = (password, isEditing) => {
         return 'A senha é obrigatória na criação.';
     }
     if (!password && isEditing) {
-        return ''; // Senha é opcional na edição
+        return '';
     }
     if (password.length < 8) {
         return `A ${isEditing ? 'nova ' : ''}senha deve ter pelo menos 8 caracteres.`;
@@ -77,8 +77,8 @@ const ConfirmCancelDialog = ({ open, onConfirm, onClose }) => (
         onClose={onClose}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
-        fullWidth 
-        maxWidth="xs" 
+        fullWidth
+        maxWidth="xs"
     >
         <DialogTitle id="alert-dialog-title">{"Atenção!"}</DialogTitle>
         <DialogContent sx={{ p: 3 }}>
@@ -87,16 +87,15 @@ const ConfirmCancelDialog = ({ open, onConfirm, onClose }) => (
             </DialogContentText>
         </DialogContent>
         <DialogActions>
-            <Button onClick={onClose} color="primary" variant="text"> 
+            <Button onClick={onClose} color="primary" variant="text">
                 Continuar Editando
             </Button>
-            <Button onClick={onConfirm} color="error" variant="contained" autoFocus> 
+            <Button onClick={onConfirm} color="error" variant="contained" autoFocus>
                 Confirmar Cancelamento
             </Button>
         </DialogActions>
     </Dialog>
 );
-
 
 
 function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUpdate }) {
@@ -144,7 +143,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
         if (isEditing) {
             setName(currentUser.name || '');
             setEmail(currentUser.email || '');
-            setPassword(''); 
+            setPassword('');
             setRole(currentUser.role || '');
 
             setProfilePictureFile(null);
@@ -156,7 +155,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                 : [];
             setSectorIds(currentSectorIds);
         } else {
-            clearForm(); 
+            clearForm();
         }
     }, [isEditing, currentUser, clearForm]);
 
@@ -170,8 +169,8 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
             finalPreviewUrl = objectUrl;
         }
         else if (isEditing && currentUser && currentUser.profilePicture && !mustRemoveCurrentPicture) {
-            finalPreviewUrl = currentUser.profilePicture.startsWith(BACKEND_URL) 
-                ? currentUser.profilePicture 
+            finalPreviewUrl = currentUser.profilePicture.startsWith(BACKEND_URL)
+                ? currentUser.profilePicture
                 : `${BACKEND_URL}${currentUser.profilePicture}`;
         }
 
@@ -223,7 +222,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
         if (file) {
             setProfilePictureFile(file);
             setFileName(file.name);
-            setMustRemoveCurrentPicture(false); 
+            setMustRemoveCurrentPicture(false);
         } else {
             setProfilePictureFile(null);
             setFileName('');
@@ -236,7 +235,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
         setPreviewUrl('');
 
         if (isEditing && currentUser && currentUser.profilePicture) {
-            setMustRemoveCurrentPicture(true); 
+            setMustRemoveCurrentPicture(true);
         }
     };
 
@@ -246,15 +245,12 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
 
     const handleCancelConfirm = () => {
         setIsCancelConfirmationOpen(false);
-        if (onFinish) onFinish(); 
+        if (onFinish) onFinish();
     };
 
     const handleCancelClose = () => {
         setIsCancelConfirmationOpen(false);
     };
-
-
-    // --- Handler de Submissão ---
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -280,7 +276,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
         formData.append('role', role);
 
         if (password) {
-            formData.append('password', password); 
+            formData.append('password', password);
         } else if (!isEditing) {
             toast.error('A senha é obrigatória na criação de um novo usuário.');
             return;
@@ -289,15 +285,15 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
         const safeSectorIds = Array.isArray(sectorIds) ? sectorIds : [];
         const isAdmin = role.toUpperCase() === 'ADMIN';
 
-        if (!isAdmin && !isSelfEdit) { 
+        if (!isAdmin && !isSelfEdit) {
             safeSectorIds.forEach(id => formData.append('sectorIds[]', id));
         }
 
 
         if (profilePictureFile) {
-            formData.append('profilePicture', profilePictureFile); 
+            formData.append('profilePicture', profilePictureFile);
         } else if (isEditing && currentUser.profilePicture && mustRemoveCurrentPicture) {
-            formData.append('profilePictureRemove', 'true'); 
+            formData.append('profilePictureRemove', 'true');
         }
 
         if (!isSelfEdit && role.toUpperCase() === 'VENDEDOR' && safeSectorIds.length === 0) {
@@ -321,18 +317,18 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                 const updatePayload = {
                     name: updatedUserFromBackend.name,
                     email: updatedUserFromBackend.email,
-                    profilePicture: updatedUserFromBackend.profilePicture, 
+                    profilePicture: updatedUserFromBackend.profilePicture,
                 };
-                
+
                 if (onUserUpdate) {
-                    onUserUpdate(updatePayload); 
+                    onUserUpdate(updatePayload);
                 }
-                
+
             } else {
                 if (onUserUpdate) {
                     onUserUpdate(updatedUserFromBackend);
                 }
-                
+
                 if (!isEditing) clearForm();
             }
 
@@ -354,7 +350,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
     const isAdmin = role.toUpperCase() === 'ADMIN';
 
 
-    const disableRoleAndSectors = isSelfEdit; 
+    const disableRoleAndSectors = isSelfEdit;
 
     const hasImage = !!previewUrl;
 
@@ -381,9 +377,34 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                         flexDirection: 'column',
                         alignItems: 'center',
                         mb: 3,
-                        mt: 1
+                        mt: 1,
+
+                        border: '1px solid #c4c4c4',
+                        borderRadius: '4px',
+                        pt: 3,
+                        pb: 2,
+                        px: 2,
+                        position: 'relative',
+                        width: '100%',
+                        boxSizing: 'border-box',
                     }}
                 >
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 14,
+                            transform: 'translateY(-50%)',
+                            bgcolor: 'background.paper',
+                            px: 0.5,
+                            color: 'text.secondary',
+                            fontWeight: 'medium',
+                        }}
+                    >
+                        Foto de Perfil (Opcional)
+                    </Typography>
+
                     <Box
                         sx={{
                             display: 'inline-block',
@@ -439,13 +460,10 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                         id="profile-picture-upload"
                         type="file"
                         onChange={handleFileChange}
-                        key={isEditing ? currentUser.id : 'new-user-upload'} 
+                        key={isEditing ? currentUser.id : 'new-user-upload'}
                     />
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                            Foto de Perfil (Opcional)
-                        </Typography>
                         <label htmlFor="profile-picture-upload">
                             <Button variant="outlined" component="span">
                                 {isEditing && hasImage ? 'Trocar Foto' : 'Selecionar Foto'}
@@ -477,19 +495,19 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                     error={!!emailError}
                     helperText={emailError}
                     inputProps={{
-                        autocomplete: isEditing ? 'off' : 'email',
+                        autocomplete:'email'
                     }}
                 />
 
                 <TextField
                     select
-                    label="Role (Função)"
+                    label="Cargo"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     required
                     fullWidth
                     margin="normal"
-                    disabled={disableRoleAndSectors} 
+                    disabled={disableRoleAndSectors}
                 >
                     {roleOptions.map(option => (
                         <MenuItem key={option.value} value={option.value}>
@@ -501,8 +519,8 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                 <FormControl
                     fullWidth
                     margin="normal"
-                    required={!isAdmin && !disableRoleAndSectors && role.toUpperCase() === 'VENDEDOR'} 
-                    disabled={disableRoleAndSectors || isAdmin} 
+                    required={!isAdmin && !disableRoleAndSectors && role.toUpperCase() === 'VENDEDOR'}
+                    disabled={disableRoleAndSectors || isAdmin}
                     error={!isAdmin && role.toUpperCase() === 'VENDEDOR' && sectorIds.length === 0 && !disableRoleAndSectors}
                 >
                     <InputLabel id="sector-select-label">Setores</InputLabel>
@@ -573,20 +591,20 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                 <Box
                     sx={{
                         display: 'flex',
-                        justifyContent:  'space-between',
+                        justifyContent: 'space-between',
                         gap: 2,
-                        p: 2, 
-                        mt: 2, 
+                        p: 2,
+                        mt: 2,
                         position: 'sticky',
                         bottom: 0,
-                        zIndex: 10, 
-                        backgroundColor: '#fff', 
+                        zIndex: 10,
+                        backgroundColor: '#fff',
                     }}
                 >
                     <Button
                         variant="outlined"
                         color="secondary"
-                        onClick={handleCancelClick} 
+                        onClick={handleCancelClick}
                     >
                         Cancelar
                     </Button>

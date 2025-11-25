@@ -11,12 +11,12 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { setUserListUpdateCallback, updateLoggedUserGlobally } from '../App';
 
-function UsuariosPage({ loggedUser, userRole }) { 
+function UsuariosPage({ loggedUser, userRole }) {
     const [users, setUsers] = useState([]);
     const [sectors, setSectors] = useState([]);
 
     const [openModal, setOpenModal] = useState(false);
-    const [editingUser, setEditingUser] = useState(null); 
+    const [editingUser, setEditingUser] = useState(null);
 
     const navigate = useNavigate();
 
@@ -47,17 +47,16 @@ function UsuariosPage({ loggedUser, userRole }) {
     
     useEffect(() => {
         fetchUsers();
-        fetchAllSectors(); 
+        fetchAllSectors();
 
-        setUserListUpdateCallback(fetchUsers); 
+        setUserListUpdateCallback(fetchUsers);
 
         return () => {
             setUserListUpdateCallback(null);
         };
-    }, [fetchUsers, fetchAllSectors]); 
+    }, [fetchUsers, fetchAllSectors]);
 
     const handleDeleteUser = async (id) => {
-        if (!window.confirm('Tem certeza que deseja deletar este usuário?')) return;
         try {
             await API.delete(`/users/${id}`);
             setUsers(currentUsers => currentUsers.filter(user => user.id !== id));
@@ -68,12 +67,12 @@ function UsuariosPage({ loggedUser, userRole }) {
     };
 
     const handleCreateClick = () => {
-        setEditingUser(null); 
+        setEditingUser(null);
         setOpenModal(true);
     };
 
     const handleEditClick = (user) => {
-        setEditingUser(user); 
+        setEditingUser(user);
         setOpenModal(true);
     };
     
@@ -81,7 +80,7 @@ function UsuariosPage({ loggedUser, userRole }) {
         setUsers(currentUsers => {
             const index = currentUsers.findIndex(user => user.id === updatedUser.id);
             if (index !== -1) {
-                return currentUsers.map(user => 
+                return currentUsers.map(user =>
                     user.id === updatedUser.id ? { ...user, ...updatedUser } : user
                 );
             } else {
@@ -93,17 +92,16 @@ function UsuariosPage({ loggedUser, userRole }) {
             updateLoggedUserGlobally(updatedUser);
         }
         
-        setOpenModal(false); 
+        setOpenModal(false);
         setEditingUser(null);
         toast.success(editingUser ? 'Usuário editado com sucesso!' : 'Usuário criado com sucesso!');
-    }, [editingUser, loggedUser]); 
+    }, [editingUser, loggedUser]);
 
 
     const handleCloseModal = () => {
         setOpenModal(false);
         setEditingUser(null);
     };
-
 
     if (!canManageUsers) {
         return (
@@ -145,7 +143,14 @@ function UsuariosPage({ loggedUser, userRole }) {
 
             <Dialog
                 open={openModal}
-                onClose={handleCloseModal} 
+                disableEscapeKeyDown={true}
+                onClose={(event, reason) => {
+                    if (reason === 'backdropClick') {
+                        return; 
+                    }
+
+                    handleCloseModal();
+                }}
                 fullWidth
                 maxWidth="sm"
             >
@@ -153,14 +158,14 @@ function UsuariosPage({ loggedUser, userRole }) {
                     {editingUser ? 'Editar Usuário' : 'Criar Novo Usuário'}
                 </DialogTitle>
                 <DialogContent
-                    sx={{ paddingBottom: '0px !important' }} 
+                    sx={{ paddingBottom: '0px !important' }}
                 >
                     <Box sx={{ pt: 1 }}>
                         <UserForm
                             key={editingUser ? editingUser.id : 'create-new'}
                             sectors={sectors}
                             currentUser={editingUser}
-                            onFinish={handleCloseModal}
+                            onFinish={handleCloseModal} 
                             onUserUpdate={handleUserUpdateInList}
                         />
                     </Box>

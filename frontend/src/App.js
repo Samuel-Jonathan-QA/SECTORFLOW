@@ -9,7 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import SetoresPage from './pages/SetoresPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ProdutosPage from './pages/ProdutosPage';
-import Home from './pages/Home';
+import Login from './pages/Login';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect } from 'react';
@@ -117,7 +117,7 @@ function AppContent() {
         <Routes>
             <Route
                 path="/"
-                element={<Home loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
+                element={<Login loggedUser={loggedUser} setLoggedUser={setLoggedUser} />}
             />
 
             <Route

@@ -1,5 +1,3 @@
-// frontend/src/pages/Home.js
-
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -68,6 +66,13 @@ function UserLogin({ setLoggedUser }) {
         event.preventDefault();
     };
 
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        if (email && password) {
+            handleLogin();
+        }
+    };
+
     return (
         <Paper 
             elevation={6} 
@@ -97,70 +102,77 @@ function UserLogin({ setLoggedUser }) {
             <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600, color: '#333' }}>
                 Entrar no SectorFlow
             </Typography>
+            
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+                <TextField
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                    variant="outlined" 
+                    sx={{ mb: 2 }} 
+                    inputProps={{
+                        // Omitido autocomplete para email. Navegadores modernos geralmente sugerem.
+                    }}
+                />
 
-            <TextField
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                fullWidth
-                margin="normal"
-                variant="outlined" 
-                sx={{ mb: 2 }} 
-            />
+                <TextField
+                    label="Senha"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    fullWidth
+                    margin="normal"
+                    variant="outlined"
+                    sx={{ mb: 3 }} 
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    aria-label="toggle password visibility"
+                                    onClick={handleClickShowPassword}
+                                    onMouseDown={handleMouseDownPassword}
+                                    edge="end"
+                                >
+                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        ),
+                    }}
+                    inputProps={{
+                        // Usa 'current-password' para permitir a sugestão de credenciais salvas, 
+                        // mas confia que o navegador moderno não fará o preenchimento automático na carga da página, 
+                        // exigindo a interação do usuário (clique/foco) para preencher.
+                        autocomplete: 'current-password',
+                    }}
+                />
 
-            <TextField
-                label="Senha"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                sx={{ mb: 3 }} 
-                InputProps={{
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton
-                                aria-label="toggle password visibility"
-                                onClick={handleClickShowPassword}
-                                onMouseDown={handleMouseDownPassword}
-                                edge="end"
-                            >
-                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                        </InputAdornment>
-                    ),
-                }}
-                inputProps={{
-                    autocomplete: 'new-password', 
-                }}
-            />
-
-            <Button
-                variant="contained"
-                onClick={handleLogin}
-                disabled={!email || !password}
-                fullWidth
-                size="large" 
-                sx={{
-                    mt: 2, 
-                    backgroundColor: '#187bbd', 
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    '&:hover': {
-                        backgroundColor: '#0f5a8a', 
-                    },
-                }}
-            >
-                Entrar
-            </Button>
-
+                <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={!email || !password}
+                    fullWidth
+                    size="large" 
+                    sx={{
+                        mt: 2, 
+                        backgroundColor: '#187bbd', 
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        '&:hover': {
+                            backgroundColor: '#0f5a8a', 
+                        },
+                    }}
+                >
+                    Entrar
+                </Button>
+            </Box>
         </Paper>
     );
 }
 
-function Home({ loggedUser, setLoggedUser }) { 
+function Login({ loggedUser, setLoggedUser }) { 
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -201,4 +213,4 @@ function Home({ loggedUser, setLoggedUser }) {
     );
 }
 
-export default Home;
+export default Login;

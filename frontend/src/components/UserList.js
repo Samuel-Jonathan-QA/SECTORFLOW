@@ -4,7 +4,8 @@ import {
     TableSortLabel, TablePagination,
     Typography, Paper, IconButton, Box, Divider,
     TextField, FormControl, InputLabel, Select, MenuItem,
-    Grid, Avatar, Tooltip, Chip 
+    Grid, Avatar, Tooltip, Chip,
+    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -16,6 +17,65 @@ const roleMap = {
     ADMIN: 'Administrador',
     VENDEDOR: 'Vendedor',
 };
+const roleChipMap = {
+    ADMIN: {
+        variant: 'filled',
+        sx: {
+            bgcolor: '#e3f2fd',
+            color: '#1565c0', 
+            fontWeight: 'bold'
+        }
+    },
+    VENDEDOR: { 
+        variant: 'filled',
+        sx: {
+            bgcolor: '#e8f5e9',
+            color: '#2e7d32', 
+            fontWeight: 'bold'
+        }
+    },
+    DEFAULT: {
+        variant: 'filled',
+        sx: {
+            bgcolor: '#eeeeee', 
+            color: '#616161', 
+            fontWeight: 'bold'
+        }
+    }
+};
+
+const DeleteConfirmationModal = ({ open, handleClose, handleConfirm, userName }) => (
+    <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="delete-modal-title"
+        aria-describedby="delete-modal-description"
+    >
+        <DialogTitle id="delete-modal-title" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+            Confirmar Exclusão
+        </DialogTitle>
+        <DialogContent>
+            <DialogContentText id="delete-modal-description">
+                Tem certeza que deseja excluir o usuário{' '}
+                <Box component="span" sx={{ fontWeight: 'bold' }}>
+                    {userName || 'selecionado'}
+                </Box>
+                ?
+                <br />
+                Esta ação é irreversível.
+            </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={handleClose} color="primary" variant="outlined" >
+                Cancelar
+            </Button>
+            <Button onClick={handleConfirm} color="error" variant="contained" autoFocus>
+                Excluir
+            </Button>
+        </DialogActions>
+    </Dialog>
+);
+
 
 function descendingComparator(a, b, orderBy) {
     const getComparisonValue = (item, key) => {
@@ -68,6 +128,18 @@ const headCells = [
     { id: 'actions', numeric: false, label: 'Ações', disableSorting: true },
 ];
 
+const dataCellStyles = {
+    maxWidth: 250, 
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+};
+
+const nameCellStyles = {
+    ...dataCellStyles,
+    maxWidth: 200,
+    minWidth: 200,
+};
 
 function UserList({
     users = [],
@@ -78,10 +150,14 @@ function UserList({
     const [selectedRole, setSelectedRole] = useState('all');
 
     const [order, setOrder] = useState('asc');
-    const [orderBy, setOrderBy] = useState(null); 
+    const [orderBy, setOrderBy] = useState(null);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
+
 
     const availableRoles = useMemo(() => {
         const roles = new Set(users.map(user => user.role).filter(role => role));
@@ -94,7 +170,7 @@ function UserList({
 
         if (orderBy === property) {
             if (order === 'asc') {
-                newOrder = 'desc'; 
+                newOrder = 'desc';
             } else if (order === 'desc') {
                 newOrderBy = null;
                 newOrder = 'asc';
@@ -103,7 +179,7 @@ function UserList({
 
         setOrder(newOrder);
         setOrderBy(newOrderBy);
-        setPage(0); 
+        setPage(0);
     }, [order, orderBy]);
 
     const handleChangePage = (event, newPage) => {
@@ -114,6 +190,23 @@ function UserList({
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+
+    const handleDeleteClick = useCallback((user) => {
+        setUserToDelete(user);
+        setIsDeleteModalOpen(true);
+    }, []);
+
+    const handleCloseDeleteModal = useCallback(() => {
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+    }, []);
+
+    const handleConfirmDelete = useCallback(() => {
+        if (userToDelete && onDelete) {
+            onDelete(userToDelete.id);
+        }
+        handleCloseDeleteModal();
+    }, [userToDelete, onDelete, handleCloseDeleteModal]);
 
 
     const sortedFilteredUsers = useMemo(() => {
@@ -207,10 +300,14 @@ function UserList({
                                     key={headCell.id}
                                     align={headCell.numeric ? 'right' : 'left'}
                                     sortDirection={orderBy === headCell.id ? order : false}
-                                    sx={{ minWidth: headCell.id === 'name' ? 200 : 'auto' }}
+                                    sx={{
+                                        minWidth: headCell.id === 'name' ? 200 : 150,
+                                        ...(headCell.id === 'name' ? nameCellStyles : (headCell.id !== 'actions' ? dataCellStyles : {})),
+                                        pr: headCell.id === 'actions' ? 3 : 0
+                                    }}
                                 >
                                     {headCell.disableSorting ? (
-                                        <Typography fontWeight="bold" sx={{ pr: 3 }}>
+                                        <Typography fontWeight="bold" sx={{ pr: headCell.id === 'actions' ? 3 : 0 }}>
                                             {headCell.label}
                                         </Typography>
                                     ) : (
@@ -246,7 +343,7 @@ function UserList({
                             sortedFilteredUsers
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((user) => {
-                                    
+
                                     const cacheBuster = user.profilePicture ? `?t=${Date.now()}` : '';
 
                                     const profileSrc = user.profilePicture
@@ -254,31 +351,39 @@ function UserList({
                                         : undefined;
 
                                     const fullName = user.name || '';
-                                    const firstName = fullName.split(' ')[0];
-                                    
+                                    const nameParts = fullName.split(' ');
+
+                                    let displayName = nameParts[0] || '';
+                                    if (nameParts.length > 1) {
+                                        displayName += ' ' + nameParts[1];
+                                    }
+
                                     let displaySectorName;
                                     let displayTooltip;
                                     let additionalSectorsCount = 0;
 
                                     if (user.role === 'ADMIN') {
-                                        displaySectorName = 'Acesso Global'; 
+                                        displaySectorName = 'Acesso Global';
                                         displayTooltip = 'Administrador possui acesso a todos os setores.';
                                     } else {
                                         const sectors = user.Sectors || [];
-                                        
+
                                         displayTooltip = sectors.length > 0
                                             ? sectors.map(sector => sector.name).join(', ')
                                             : 'N/A';
-                                            
+
                                         displaySectorName = sectors.length > 0
                                             ? sectors[0].name
                                             : 'N/A';
-                                            
+
                                         additionalSectorsCount = sectors.length > 1
                                             ? sectors.length - 1
                                             : 0;
                                     }
-                                    
+
+                                    const roleLabel = roleMap[user.role] || user.role;
+                                    const chipProps = roleChipMap[user.role] || roleChipMap.DEFAULT;
+
                                     return (
                                         <TableRow
                                             hover
@@ -287,7 +392,7 @@ function UserList({
                                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                         >
 
-                                            <TableCell component="th" scope="row">
+                                            <TableCell component="th" scope="row" sx={nameCellStyles}>
                                                 <Box display="flex" alignItems="center">
                                                     <Avatar
                                                         src={profileSrc}
@@ -302,30 +407,41 @@ function UserList({
                                                     >
                                                         {!user.profilePicture && user.name ? user.name[0].toUpperCase() : <AccountCircleIcon sx={{ fontSize: 18 }} />}
                                                     </Avatar>
-                                                    
+
                                                     <Tooltip title={fullName} placement="top" arrow>
                                                         <Typography variant="body2" noWrap>
-                                                            {fullName.includes(' ') ? firstName : fullName}
+                                                            {displayName}
                                                         </Typography>
                                                     </Tooltip>
                                                 </Box>
                                             </TableCell>
 
-                                            <TableCell align="left">
-                                                <Typography variant="body2">{roleMap[user.role] || user.role}</Typography>
+                                            <TableCell align="left" sx={dataCellStyles}>
+                                                <Chip
+                                                    label={roleLabel}
+                                                    size="small"
+                                                    variant={chipProps.variant} 
+                                                    sx={{
+                                                        ...chipProps.sx, 
+                                                        maxWidth: '100%',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                />
                                             </TableCell>
 
-                                            <TableCell align="left">
-                                                <Typography variant="body2">{user.email}</Typography>
+                                            <TableCell align="left" sx={dataCellStyles}>
+                                                <Typography variant="body2" sx={dataCellStyles}>{user.email}</Typography>
                                             </TableCell>
 
-                                            <TableCell align="left">
+                                            <TableCell align="left" sx={dataCellStyles}>
                                                 <Tooltip title={displayTooltip} placement="top" arrow>
-                                                    <Box sx={{ 
-                                                        display: 'flex', 
-                                                        alignItems: 'center', 
-                                                        gap: 1, 
-                                                        whiteSpace: 'nowrap', 
+                                                    <Box sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        whiteSpace: 'nowrap',
+                                                        ...dataCellStyles
                                                     }}>
                                                         <Typography variant="body2" noWrap>
                                                             {displaySectorName}
@@ -335,14 +451,14 @@ function UserList({
                                                             <Chip
                                                                 label={`+${additionalSectorsCount}`}
                                                                 size="small"
-                                                                sx={{ 
-                                                                    height: 20, 
-                                                                    fontSize: '0.65rem', 
+                                                                sx={{
+                                                                    height: 20,
+                                                                    fontSize: '0.65rem',
                                                                     fontWeight: 'bold',
-                                                                    bgcolor: '#e0e0e0', 
+                                                                    bgcolor: '#e0e0e0',
                                                                     color: '#424242',
                                                                     '& .MuiChip-label': {
-                                                                        px: 1, 
+                                                                        px: 1,
                                                                     }
                                                                 }}
                                                             />
@@ -359,7 +475,7 @@ function UserList({
                                                         </IconButton>
                                                     )}
                                                     {onDelete && (
-                                                        <IconButton size="small" onClick={() => onDelete(user.id)}>
+                                                        <IconButton size="small" onClick={() => handleDeleteClick(user)}>
                                                             <DeleteIcon fontSize="small" color="error" />
                                                         </IconButton>
                                                     )}
@@ -389,7 +505,16 @@ function UserList({
                 labelRowsPerPage="Linhas por página:"
                 labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
             />
+            
+            <DeleteConfirmationModal
+                open={isDeleteModalOpen}
+                handleClose={handleCloseDeleteModal}
+                handleConfirm={handleConfirmDelete}
+                userName={userToDelete ? userToDelete.name : ''}
+            />
+
         </Paper>
+
     );
 }
 
