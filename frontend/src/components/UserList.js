@@ -5,11 +5,12 @@ import {
     Typography, Paper, IconButton, Box, Divider,
     TextField, FormControl, InputLabel, Select, MenuItem,
     Grid, Avatar, Tooltip, Chip,
-    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button
+    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { toast } from 'react-toastify';
 
 const BACKEND_URL = 'http://localhost:3001';
 
@@ -22,23 +23,23 @@ const roleChipMap = {
         variant: 'filled',
         sx: {
             bgcolor: '#e3f2fd',
-            color: '#1565c0', 
+            color: '#1565c0',
             fontWeight: 'bold'
         }
     },
-    VENDEDOR: { 
+    VENDEDOR: {
         variant: 'filled',
         sx: {
             bgcolor: '#e8f5e9',
-            color: '#2e7d32', 
+            color: '#2e7d32',
             fontWeight: 'bold'
         }
     },
     DEFAULT: {
         variant: 'filled',
         sx: {
-            bgcolor: '#eeeeee', 
-            color: '#616161', 
+            bgcolor: '#eeeeee',
+            color: '#616161',
             fontWeight: 'bold'
         }
     }
@@ -98,7 +99,7 @@ function descendingComparator(a, b, orderBy) {
     }
     if (bValue > aValue) {
         return 1;
-    }
+        }
     return 0;
 }
 
@@ -129,7 +130,7 @@ const headCells = [
 ];
 
 const dataCellStyles = {
-    maxWidth: 250, 
+    maxWidth: 250,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -144,7 +145,8 @@ const nameCellStyles = {
 function UserList({
     users = [],
     onDelete,
-    onEdit
+    onEdit,
+    loggedInUser = {}
 }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('all');
@@ -157,7 +159,6 @@ function UserList({
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
-
 
     const availableRoles = useMemo(() => {
         const roles = new Set(users.map(user => user.role).filter(role => role));
@@ -192,9 +193,18 @@ function UserList({
     };
 
     const handleDeleteClick = useCallback((user) => {
+        
+        const userToDeleteId = String(user.id);
+        const currentLoggedInId = String(loggedInUser.id);
+        
+        if (userToDeleteId === currentLoggedInId) {
+            toast.error("Acesso negado. Administradores não podem deletar a si mesmos.");
+            return;
+        }
+
         setUserToDelete(user);
         setIsDeleteModalOpen(true);
-    }, []);
+    }, [loggedInUser]);
 
     const handleCloseDeleteModal = useCallback(() => {
         setIsDeleteModalOpen(false);
@@ -384,6 +394,8 @@ function UserList({
                                     const roleLabel = roleMap[user.role] || user.role;
                                     const chipProps = roleChipMap[user.role] || roleChipMap.DEFAULT;
 
+                                    const isDeletable = onDelete; 
+
                                     return (
                                         <TableRow
                                             hover
@@ -420,12 +432,13 @@ function UserList({
                                                 <Chip
                                                     label={roleLabel}
                                                     size="small"
-                                                    variant={chipProps.variant} 
+                                                    variant={chipProps.variant}
                                                     sx={{
-                                                        ...chipProps.sx, 
+                                                        ...chipProps.sx,
                                                         maxWidth: '100%',
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
                                                     }}
                                                 />
                                             </TableCell>
@@ -474,6 +487,7 @@ function UserList({
                                                             <EditIcon fontSize="small" color="info" />
                                                         </IconButton>
                                                     )}
+
                                                     {onDelete && (
                                                         <IconButton size="small" onClick={() => handleDeleteClick(user)}>
                                                             <DeleteIcon fontSize="small" color="error" />
@@ -505,16 +519,14 @@ function UserList({
                 labelRowsPerPage="Linhas por página:"
                 labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
             />
-            
+
             <DeleteConfirmationModal
                 open={isDeleteModalOpen}
                 handleClose={handleCloseDeleteModal}
                 handleConfirm={handleConfirmDelete}
                 userName={userToDelete ? userToDelete.name : ''}
             />
-
         </Paper>
-
     );
 }
 

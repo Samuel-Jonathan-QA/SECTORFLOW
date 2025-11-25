@@ -18,6 +18,31 @@ const isValidEmail = (email) => {
     return EMAIL_REGEX.test(trimmedEmail);
 };
 
+const validateName = (name) => {
+    const trimmedName = name ? String(name).trim() : '';
+
+    if (!trimmedName) {
+        return 'O nome é obrigatório.';
+    }
+    
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+        return 'O nome deve conter de 3 a 50 caracteres.';
+    }
+
+    const validNameRegex = /^[a-zA-Z\s\u00C0-\u00FF'-]+$/;
+    if (!validNameRegex.test(trimmedName)) {
+        return 'Nome inválido. Use apenas letras, espaços, hífens e apóstrofos.';
+    }
+
+    const atLeastThreeLettersRegex = /[a-zA-Z\u00C0-\u00FF].*[a-zA-Z\u00C0-\u00FF].*[a-zA-Z\u00C0-\u00FF]/;
+    if (!atLeastThreeLettersRegex.test(trimmedName)) {
+        return 'O nome deve conter pelo menos 3 caracteres de letra.';
+    }
+    
+    return null;
+};
+
+
 const validatePassword = (password) => {
     const errors = [];
     const minLength = 8;
@@ -114,7 +139,7 @@ const getOneUser = async (req, res) => {
 const createUser = async (req, res) => {
     let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds;
 
-    const { email, password, role, ...rest } = req.body;
+    const { name, email, password, role, ...rest } = req.body; 
     let transaction;
 
     let sectorIdArray = [];
@@ -130,10 +155,18 @@ const createUser = async (req, res) => {
         ? `/uploads/profile_pictures/${req.file.filename}`
         : null;
 
-    if (!email || !password || !role) {
+    if (!name || !email || !password || !role) { 
         if (req.file) { removeOldProfilePicture(profilePicturePath); }
-        return res.status(400).json({ error: 'Email, senha e role são obrigatórios.' });
+        return res.status(400).json({ error: 'Nome, email, senha e role são obrigatórios.' });
     }
+
+    const nameErrorMsg = validateName(name);
+    if (nameErrorMsg) {
+        if (req.file) { removeOldProfilePicture(profilePicturePath); }
+        return res.status(400).json({ error: nameErrorMsg });
+    }
+    const trimmedName = name.trim();
+
 
     if (!isValidEmail(email)) {
         if (req.file) { removeOldProfilePicture(profilePicturePath); }
@@ -167,6 +200,7 @@ const createUser = async (req, res) => {
         transaction = await sequelize.transaction();
 
         const newUser = await User.create({
+            name: trimmedName, 
             email: trimmedEmail, 
             password,
             role: roleUpper,
@@ -221,7 +255,7 @@ const updateUser = async (req, res) => {
 
     let sectorIdsRaw = req.body['sectorIds[]'] || req.body.sectorIds;
 
-    const { email, password, profilePictureRemove, ...updateData } = req.body;
+    const { email, password, profilePictureRemove, ...updateData } = req.body; 
 
     let transaction;
 
@@ -239,6 +273,17 @@ const updateUser = async (req, res) => {
             await transaction.rollback();
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
+
+        if (updateData.name !== undefined) {
+            const nameErrorMsg = validateName(updateData.name);
+            if (nameErrorMsg) {
+                if (req.file) { removeOldProfilePicture(newFilePath); }
+                await transaction.rollback();
+                return res.status(400).json({ error: nameErrorMsg });
+            }
+            updateData.name = updateData.name.trim(); 
+        }
+
 
         if (email !== undefined) {
             if (!isValidEmail(email)) {
@@ -362,6 +407,15 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     const { id } = req.params;
+    const loggedInUser = req.user;
+
+    if (loggedInUser.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Acesso negado. Somente administradores podem deletar usuários.' });
+    }
+
+    if (String(loggedInUser.id) === String(id)) {
+        return res.status(403).json({ error: 'Acesso negado. Administradores não podem deletar a si mesmos.(back-end)' });
+    }
 
     try {
         const userToDelete = await User.findByPk(id, { attributes: ['profilePicture'] });

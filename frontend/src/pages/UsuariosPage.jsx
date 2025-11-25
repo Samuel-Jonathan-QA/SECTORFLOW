@@ -138,6 +138,7 @@ function UsuariosPage({ loggedUser, userRole }) {
                     users={users}
                     onDelete={handleDeleteUser}
                     onEdit={handleEditClick}
+                    loggedInUser={loggedUser}
                 />
             </Grid>
 
