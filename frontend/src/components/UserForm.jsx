@@ -14,6 +14,10 @@ import { toast } from 'react-toastify';
 
 const BACKEND_URL = 'http://localhost:3001';
 
+const ALLOWED_SPECIAL_CHARS = '!@#$%&*';
+const MIN_LENGTH = 8;
+const MAX_LENGTH = 32;
+
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 1;
 const MenuProps = {
@@ -46,6 +50,12 @@ const validateEmail = (email) => {
     if (!email) {
         return 'O e-mail é obrigatório.';
     }
+    if (email.length < 15) {
+        return 'O e-mail deve conter no mínimo 15 caracteres.';
+    }
+    if (email.length > 50) {
+        return 'O e-mail deve conter no máximo 50 caracteres.';
+    }
     const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(email)) {
         return 'Formato de e-mail inválido.';
@@ -54,19 +64,51 @@ const validateEmail = (email) => {
 };
 
 const validatePassword = (password, isEditing) => {
+    const errors = [];
+
     if (!password && !isEditing) {
         return 'A senha é obrigatória na criação.';
     }
     if (!password && isEditing) {
         return '';
     }
-    if (password.length < 8) {
-        return `A ${isEditing ? 'nova ' : ''}senha deve ter pelo menos 8 caracteres.`;
+
+    if (/\s/.test(password)) {
+        errors.push('sem espaços');
     }
-    const complexRegex = /^(?=.*[a-zA-Z])(?=.*[0-9]).+$/;
-    if (!complexRegex.test(password)) {
-        return `A ${isEditing ? 'nova ' : ''}senha deve conter letras e números.`;
+
+    if (password.length < MIN_LENGTH) {
+        errors.push(`mínimo de ${MIN_LENGTH} caracteres`);
     }
+
+    if (password.length > MAX_LENGTH) {
+        errors.push(`máximo de ${MAX_LENGTH} caracteres`);
+    }
+
+    if (!/(?=.*[a-z])/.test(password)) {
+        errors.push('mínimo 1 letra minúscula');
+    }
+
+    if (!/(?=.*[A-Z])/.test(password)) {
+        errors.push('mínimo 1 letra maiúscula');
+    }
+
+    if (!/(?=.*[0-9].*[0-9])/.test(password)) {
+        errors.push('mínimo 2 números');
+    }
+
+    const escapedSpecialChars = ALLOWED_SPECIAL_CHARS.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const specialCharRegex = new RegExp(`(?=.*[${escapedSpecialChars}])`);
+    if (!specialCharRegex.test(password)) {
+        errors.push(`mínimo 1 caractere especial (${ALLOWED_SPECIAL_CHARS})`);
+    }
+
+    if (errors.length > 0) {
+        const isNew = isEditing ? 'nova ' : '';
+        const errorMessage = errors.join(', ');
+        return `A ${isNew}senha não atende aos requisitos. Deve ter: ${errorMessage}.`;
+    }
+
     return '';
 };
 
@@ -296,8 +338,8 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
             formData.append('profilePictureRemove', 'true');
         }
 
-        if (!isSelfEdit && role.toUpperCase() === 'VENDEDOR' && safeSectorIds.length === 0) {
-            toast.error('Vendedores devem ser associados a pelo menos um setor.');
+        if (!isAdmin && role.toUpperCase() === 'VENDEDOR' && safeSectorIds.length === 0) {
+            toast.error('Vendedores devem ser associados a pelo menos um setor ativo.');
             return;
         }
 
@@ -349,6 +391,7 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
     const submitButtonText = isEditing ? (isSelfEdit ? 'Salvar Alterações' : 'Salvar Edição') : 'Criar Usuário';
     const isAdmin = role.toUpperCase() === 'ADMIN';
 
+    const passwordHelperText = `Min ${MIN_LENGTH} e Max ${MAX_LENGTH} caracteres. Deve conter: 1 maiúscula, 1 minúscula, 2 números, 1 caractere especial (${ALLOWED_SPECIAL_CHARS}) e não ter espaços.`;
 
     const disableRoleAndSectors = isSelfEdit;
 
@@ -495,7 +538,8 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                     error={!!emailError}
                     helperText={emailError}
                     inputProps={{
-                        autocomplete:'email'
+                        autocomplete: 'email',
+                        maxLength: 50
                     }}
                 />
 
@@ -568,8 +612,9 @@ function UserForm({ sectors, currentUser, onFinish, isSelfEdit = false, onUserUp
                     fullWidth
                     margin="normal"
                     error={!!passwordError}
-                    helperText={passwordError || (isEditing ? 'Deixe em branco para manter a senha atual. Mínimo de 8 caracteres, com letras e números.' : 'Mínimo de 8 caracteres, com letras e números.')}
+                    helperText={passwordError || (isEditing ? `Deixe em branco para manter a senha atual. ${passwordHelperText}` : passwordHelperText)}
                     InputProps={{
+                        maxLength: MAX_LENGTH,
                         endAdornment: (
                             <InputAdornment position="end">
                                 <IconButton
