@@ -1,7 +1,8 @@
 // frontend/src/pages/SetoresPage.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button, Paper, Divider, CircularProgress } from '@mui/material';
+import { Container, Typography, Grid, Dialog, DialogTitle, DialogContent, Box, Button, Divider, CircularProgress } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add'; 
 import SectorForm from '../components/SectorForm'; 
 import SectorEditForm from '../components/SectorEditForm'; 
 import SectorList from '../components/SectorList';
@@ -15,11 +16,12 @@ function SetoresPage({ userRole }) {
     const [isLoading, setIsLoading] = useState(true);
 
     const [openModal, setOpenModal] = useState(false);
-    const [editingSector, setEditingSector] = useState(null);
+    const [editingSector, setEditingSector] = useState(null); 
 
     const navigate = useNavigate();
 
     const canManageSectors = userRole && userRole.toUpperCase() === 'ADMIN';
+
 
     const fetchSectors = useCallback(async () => {
         if (!canManageSectors) {
@@ -52,7 +54,6 @@ function SetoresPage({ userRole }) {
             
         } catch (error) {
             console.error('Erro ao buscar vendedores:', error);
-            toast.error('Não foi possível carregar a lista de vendedores para edição.');
         }
     }, [canManageSectors]);
 
@@ -60,7 +61,7 @@ function SetoresPage({ userRole }) {
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
-            await Promise.all([fetchSectors(), fetchVendors()]);
+            await Promise.all([fetchSectors(), fetchVendors()]); 
             setIsLoading(false);
         };
         
@@ -73,8 +74,13 @@ function SetoresPage({ userRole }) {
     }, [canManageSectors, fetchSectors, fetchVendors]);
 
 
+    const handleCreateClick = () => {
+        setEditingSector(null); 
+        setOpenModal(true);
+    };
+
     const handleEditClick = (sector) => {
-        setEditingSector(sector);
+        setEditingSector(sector); 
         setOpenModal(true);
     };
 
@@ -94,6 +100,7 @@ function SetoresPage({ userRole }) {
             toast.error(error.response?.data?.error || 'Erro ao deletar setor. Verifique se há produtos ou usuários associados.');
         }
     };
+
 
     if (!canManageSectors) {
         return (
@@ -123,35 +130,40 @@ function SetoresPage({ userRole }) {
     return (
         <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
 
-            <Divider sx={{ mb: 4 }} />
+            <Divider sx={{ mb: 1 }} />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" gutterBottom fontWeight="medium" component="span">
+                    Lista de Setores
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={handleCreateClick}
+                >
+                    Criar Novo Setor
+                </Button>
+            </Box>
 
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                    <Typography variant="h5" gutterBottom fontWeight="medium">
-                        Criar Setor
-                    </Typography>
-                    <SectorForm
-                        onFinish={handleCloseModal}
-                        existingSectors={sectors} 
-                    />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                    <Typography variant="h5" gutterBottom fontWeight="medium">
-                        Lista de Setores
-                    </Typography>
-                    <SectorList
-                        sectors={sectors}
-                        onDelete={handleDeleteSector}
-                        onEdit={handleEditClick} 
-                        userRole={userRole}
-                    />
-                </Grid>
+            <Grid item xs={12}>
+                <SectorList
+                    sectors={sectors}
+                    onDelete={handleDeleteSector}
+                    onEdit={handleEditClick} 
+                    userRole={userRole}
+                    key={sectors.length}
+                />
             </Grid>
 
-            <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+            <Dialog 
+                open={openModal} 
+                onClose={handleCloseModal} 
+                fullWidth 
+                maxWidth="sm"
+            >
                 <DialogTitle>
-                    {editingSector ? `Editar Setor: ${editingSector.name}` : 'Ação Inválida'}
+                    {editingSector ? `Editar Setor: ${editingSector.name}` : 'Criar Novo Setor'}
                 </DialogTitle>
                 <DialogContent>
                     {editingSector ? (
@@ -160,9 +172,15 @@ function SetoresPage({ userRole }) {
                             onFinish={handleCloseModal}
                             existingSectors={sectors}
                             allVendors={vendors} 
+                            key={`edit-${editingSector.id}`} 
                         />
                     ) : (
-                         <Typography>Nenhum setor selecionado para edição.</Typography>
+                        <SectorForm
+                            onFinish={handleCloseModal}
+                            existingSectors={sectors}
+                            allVendors={vendors} 
+                            key="create-sector"
+                        />
                     )}
                 </DialogContent>
             </Dialog>
